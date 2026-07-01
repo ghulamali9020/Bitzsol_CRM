@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bitzsol CRM</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 360px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 0;
+      }
+      .header {
+        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .header h1 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+        flex: 1;
+      }
+      .header .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        flex-shrink: 0;
+      }
+      .body {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      #profile-card {
+        display: none;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 12px;
+        gap: 4px;
+        flex-direction: column;
+      }
+      #profile-card.visible {
+        display: flex;
+      }
+      .field-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        font-size: 13px;
+        color: #cbd5e1;
+        line-height: 1.4;
+      }
+      .field-row .label {
+        font-weight: 600;
+        color: #94a3b8;
+        min-width: 68px;
+        flex-shrink: 0;
+      }
+      .field-row .value {
+        flex: 1;
+        word-break: break-word;
+        color: #f1f5f9;
+      }
+      .field-row .copy-btn {
+        background: transparent;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 0 4px;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: 0.2s;
+        flex-shrink: 0;
+      }
+      .field-row .copy-btn:hover {
+        background: #334155;
+        color: #e2e8f0;
+      }
+      .field-row .copy-btn.copied {
+        color: #22c55e;
+      }
+      #profile-url {
+        font-size: 11px;
+        color: #3b82f6;
+        word-break: break-all;
+        margin-top: 4px;
+        border-top: 1px solid #334155;
+        padding-top: 6px;
+      }
+      #status {
+        font-size: 12px;
+        color: #94a3b8;
+        min-height: 20px;
+        text-align: center;
+      }
+      #status.error {
+        color: #f87171;
+      }
+      #status.success {
+        color: #22c55e;
+      }
+      #status.loading {
+        color: #facc15;
+      }
+      .btn-group {
+        display: flex;
+        gap: 8px;
+      }
+      .btn-group button {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+      }
+      .btn-group button:active {
+        transform: scale(0.97);
+      }
+      #syncBtn {
+        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        color: #fff;
+      }
+      #syncBtn:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+      #syncBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      #copyAllBtn {
+        background: #334155;
+        color: #e2e8f0;
+      }
+      #copyAllBtn:hover:not(:disabled) {
+        background: #475569;
+      }
+      #copyAllBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      #pipelineSelect {
+        width: 100%;
+        padding: 8px 10px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        color: #e2e8f0;
+        font-size: 13px;
+        outline: none;
+      }
+      #pipelineSelect:focus {
+        border-color: #3b82f6;
+      }
+      #pipelineSelect option {
+        background: #1e293b;
+      }
+      label {
+        font-size: 11px;
+        color: #64748b;
+        margin-bottom: -4px;
+      }
+      .hint {
+        font-size: 11px;
+        color: #475569;
+        text-align: center;
+      }
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #334155;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="dot"></div>
+      <h1>Bitzsol CRM</h1>
+      <span id="platform-badge" style="display:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;flex-shrink:0;"></span>
+    </div>
+    <div class="body">
+      <div id="profile-card">
+        <div class="field-row">
+          <span class="label">👤 Name</span>
+          <span class="value" id="profile-name">—</span>
+          <button class="copy-btn" data-target="profile-name">📋</button>
+        </div>
+        <div class="field-row">
+          <span class="label">💼 Headline</span>
+          <span class="value" id="profile-headline">—</span>
+          <button class="copy-btn" data-target="profile-headline">📋</button>
+        </div>
+        <div class="field-row">
+          <span class="label">🌍 Location</span>
+          <span class="value" id="profile-location">—</span>
+          <button class="copy-btn" data-target="profile-location">📋</button>
+        </div>
+        <div class="field-row">
+          <span class="label">🏢 Company</span>
+          <span class="value" id="profile-company">—</span>
+          <button class="copy-btn" data-target="profile-company">📋</button>
+        </div>
+        <div class="field-row">
+          <span class="label">💼 Job Title</span>
+          <span class="value" id="profile-job-title">—</span>
+          <button class="copy-btn" data-target="profile-job-title">📋</button>
+        </div>
+        <div class="field-row">
+          <span class="label">✉️ Email</span>
+          <span class="value" id="profile-email">—</span>
+          <button class="copy-btn" data-target="profile-email">📋</button>
+        </div>
+        <div class="field-row">
+          <span class="label">📞 Phone</span>
+          <span class="value" id="profile-phone">—</span>
+          <button class="copy-btn" data-target="profile-phone">📋</button>
+        </div>
+        <div id="profile-url">—</div>
+      </div>
+      <div id="status">Open a LinkedIn profile to sync</div>
+      <label for="pipelineSelect">Pipeline</label>
+      <select id="pipelineSelect">
+        <option value="">Loading pipelines…</option>
+      </select>
+      <div class="btn-group">
+        <button id="copyAllBtn">📋 Copy All</button>
+        <button id="syncBtn">Sync Lead</button>
+      </div>
+      <div class="hint">Supports LinkedIn · Upwork · Fiverr profiles</div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

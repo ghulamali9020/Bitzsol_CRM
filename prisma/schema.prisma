@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  business_developer
+  finance_member
+  finance_admin
+}
+
+enum UserStatus {
+  active
+  inactive
+}
+
+enum LeadEmailStatus {
+  Verified
+  Not_Verified
+}
+
+enum LeadPhoneStatus {
+  Verified
+  Not_Verified
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  password  String
+  role      Role       @default(business_developer)
+  status    UserStatus @default(active)
+  image     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+   transactions Transaction[]
+
+  leads     Lead[]
+  pipelines Pipeline[]
+}
+
+model Pipeline {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  leads Lead[]
+}
+
+model Lead {
+  id           String   @id @default(uuid())
+  firstName    String
+  middleName   String?
+  lastName     String?
+  date         DateTime @default(now())
+  designation  String?
+  sourceLink   String?
+  remarks      String?
+  status       String   @default("New")
+  leadSource   String   @default("Other")
+  pipelineId   String
+  createdById  String?
+  tags         String[] @default([])
+
+  pipeline     Pipeline   @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  createdBy    User?      @relation(fields: [createdById], references: [id])
+
+  emails       LeadEmail[]
+  phones       LeadPhone[]
+  customFields LeadCustomField[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model LeadEmail {
+  id     String          @id @default(uuid())
+  email  String
+  status LeadEmailStatus @default(Not_Verified)
+  leadId String
+  lead   Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model LeadPhone {
+  id     String          @id @default(uuid())
+  phone  String
+  status LeadPhoneStatus @default(Not_Verified)
+  leadId String
+  lead   Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model LeadCustomField {
+  id     String @id @default(uuid())
+  key    String
+  value  String
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+enum TransactionType {
+  income
+  expense
+}
+
+model Transaction {
+  id          String           @id @default(uuid())
+  date        DateTime
+  description String
+  amount      Float            // or Decimal if you need exact precision
+  type        TransactionType
+  category    String
+  invoice_url String?
+  createdById String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  createdBy   User?            @relation(fields: [createdById], references: [id])
+}

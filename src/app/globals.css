@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+:root {
+  /* Core Theme (Auto-discovered by Tailwind v4) */
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  
+  --color-card: #ffffff;
+  --color-card-foreground: #000000;
+  
+  --color-popover: #ffffff;
+  --color-popover-foreground: #000000;
+  
+  --color-primary: #0164DA; /* Brand Primary Blue */
+  --color-primary-foreground: #ffffff;
+  
+  --color-secondary: #f4f4f5;
+  --color-secondary-foreground: #0164DA;
+  
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #52525b;
+  
+  --color-accent: #f4f4f5;
+  --color-accent-foreground: #0164DA;
+  
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  
+  --color-border: #e4e4e7;
+  --color-input: #e4e4e7;
+  --color-ring: #0164DA;
+  
+  --radius: 0.75rem;
+
+  /* Fonts */
+  --font-sans: var(--font-outfit), var(--font-geist-sans), ui-sans-serif, system-ui;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Custom Utilities (No Gradient as requested) */
+  --background-image-premium-gradient: #0164DA;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-blur: 12px;
+
+  /* CRM Specific Adaptable Theme Colors */
+  --crm-bg: #f8fafc;
+  --crm-panel: #ffffff;
+  --crm-border: #e2e8f0;
+  --crm-text-main: #000000;
+  --crm-text-sub: #475569;
+  --crm-panel-hover: #f1f5f9;
+  --crm-input-bg: #f1f5f9;
+}
+
+.dark {
+  --color-background: #313338; /* Discord Main Chat Area BG */
+  --color-foreground: #ffffff; /* Absolute Neutral White */
+  
+  --color-card: #2b2d31; /* Discord Sidebar / Panel BG */
+  --color-card-foreground: #ffffff;
+  
+  --color-popover: #2b2d31;
+  --color-popover-foreground: #ffffff;
+  
+  --color-primary: #0164DA; /* Brand Primary Blue */
+  --color-primary-foreground: #ffffff;
+  
+  --color-secondary: #1e1f22; /* Discord Server List BG */
+  --color-secondary-foreground: #ffffff;
+  
+  --color-muted: #1e1f22;
+  --color-muted-foreground: #ffffff; /* Readable White instead of Grey */
+  
+  --color-accent: #1e1f22;
+  --color-accent-foreground: #ffffff;
+  
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  
+  --color-border: #1e1f22;
+  --color-input: #1e1f22;
+  --color-ring: #0164DA;
+
+  /* Glassmorphism Dark */
+  --glass-bg: rgba(43, 45, 49, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-blur: 16px;
+
+  /* CRM Specific Adaptable Theme Colors Dark */
+  --crm-bg: #313338; /* Discord Main Chat Area BG */
+  --crm-panel: #2b2d31; /* Discord Sidebar BG */
+  --crm-border: #1e1f22;
+  --crm-text-main: #ffffff; /* Pure White text */
+  --crm-text-sub: #ffffff; /* Pure White text instead of Grey */
+  --crm-panel-hover: #35373c; /* Discord Item Hover BG */
+  --crm-input-bg: #1e1f22;
+}
+
+@theme {
+  --color-crm-bg: var(--crm-bg);
+  --color-crm-panel: var(--crm-panel);
+  --color-crm-border: var(--crm-border);
+  --color-crm-text-main: var(--crm-text-main);
+  --color-crm-text-sub: var(--crm-text-sub);
+  --color-crm-panel-hover: var(--crm-panel-hover);
+  --color-crm-input-bg: var(--crm-input-bg);
+}
+
+@layer base {
+  html {
+    font-size: 116%;
+  }
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+  }
+
+  .premium-gradient {
+    background: var(--background-image-premium-gradient);
+  }
+
+  .text-gradient {
+    color: var(--background-image-premium-gradient);
+  }
+}
+
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
