@@ -16,6 +16,7 @@ const fields = {
   location: document.getElementById("profile-location"),
   company: document.getElementById("profile-company"),
   jobTitle: document.getElementById("profile-job-title"),
+  experience: document.getElementById("profile-experience"),
   email: document.getElementById("profile-email"),
   phone: document.getElementById("profile-phone"),
 };
@@ -47,19 +48,27 @@ function detectPlatform(url) {
 
 function getPlatformColor(platform) {
   switch (platform) {
-    case "LinkedIn": return { bg: "#0A66C2", text: "#fff" };
-    case "Upwork": return { bg: "#14a800", text: "#fff" };
-    case "Fiverr": return { bg: "#1dbf73", text: "#fff" };
-    default: return { bg: "#334155", text: "#e2e8f0" };
+    case "LinkedIn":
+      return { bg: "#0A66C2", text: "#fff" };
+    case "Upwork":
+      return { bg: "#14a800", text: "#fff" };
+    case "Fiverr":
+      return { bg: "#1dbf73", text: "#fff" };
+    default:
+      return { bg: "#334155", text: "#e2e8f0" };
   }
 }
 
 function getPlatformIcon(platform) {
   switch (platform) {
-    case "LinkedIn": return "💼";
-    case "Upwork": return "🔗";
-    case "Fiverr": return "🎯";
-    default: return "🌐";
+    case "LinkedIn":
+      return "💼";
+    case "Upwork":
+      return "🔗";
+    case "Fiverr":
+      return "🎯";
+    default:
+      return "🌐";
   }
 }
 
@@ -78,16 +87,19 @@ function autoSelectPipeline(platform, allPipelines) {
   if (!platform || platform === "Other") return;
   const platformLower = platform.toLowerCase();
   const exactMatch = allPipelines.find(
-    (p) => p.name.toLowerCase() === platformLower
+    (p) => p.name.toLowerCase() === platformLower,
   );
   const partialMatch = allPipelines.find(
-    (p) => p.name.toLowerCase().includes(platformLower) ||
-           platformLower.includes(p.name.toLowerCase())
+    (p) =>
+      p.name.toLowerCase().includes(platformLower) ||
+      platformLower.includes(p.name.toLowerCase()),
   );
   const match = exactMatch || partialMatch;
   if (match) {
     pipelineSelect.value = match.id;
-    console.log(`[Bitzsol CRM] Auto-selected pipeline: ${match.name} for platform: ${platform}`);
+    console.log(
+      `[Bitzsol CRM] Auto-selected pipeline: ${match.name} for platform: ${platform}`,
+    );
   }
 }
 
@@ -123,6 +135,7 @@ copyAllBtn.addEventListener("click", async () => {
     "🌍 Location": fields.location.textContent,
     "🏢 Company": fields.company.textContent,
     "💼 Job Title": fields.jobTitle.textContent,
+    "🧭 Experience": fields.experience.textContent,
     "✉️ Email": fields.email.textContent,
     "📞 Phone": fields.phone.textContent,
     "🔗 Profile URL": urlEl.textContent,
@@ -170,7 +183,7 @@ async function loadPipelines(autoSelectPlatform = null) {
     pipelineSelect.innerHTML = allPipelines
       .map((p) => `<option value="${p.id}">${p.name}</option>`)
       .join("");
-    
+
     if (autoSelectPlatform) {
       autoSelectPipeline(autoSelectPlatform, allPipelines);
     }
@@ -192,28 +205,36 @@ async function getProfileFromTab(tabId, maxRetries = 2) {
   let lastError = null;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await chrome.tabs.sendMessage(tabId, { action: "GET_PROFILE" });
+      const response = await chrome.tabs.sendMessage(tabId, {
+        action: "GET_PROFILE",
+      });
       if (response && response.error) throw new Error(response.error);
       return response;
     } catch (err) {
       lastError = err;
       // If the error indicates no receiver, inject the content script
-      if (err.message.includes("Could not establish connection") ||
-          err.message.includes("Receiving end does not exist")) {
-        console.log(`[Bitzsol CRM] Content script not found, injecting (attempt ${attempt+1})...`);
+      if (
+        err.message.includes("Could not establish connection") ||
+        err.message.includes("Receiving end does not exist")
+      ) {
+        console.log(
+          `[Bitzsol CRM] Content script not found, injecting (attempt ${attempt + 1})...`,
+        );
         await chrome.scripting.executeScript({
           target: { tabId: tabId },
           files: ["content.js"],
         });
         // Wait a moment for the script to initialize
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise((r) => setTimeout(r, 300));
       } else {
         // Other errors – break retry
         break;
       }
     }
   }
-  throw new Error(lastError?.message || "Failed to retrieve profile after retries");
+  throw new Error(
+    lastError?.message || "Failed to retrieve profile after retries",
+  );
 }
 
 async function scrapeAndDisplay(showLoading = true) {
@@ -226,7 +247,9 @@ async function scrapeAndDisplay(showLoading = true) {
   showPlatformBadge(platform);
 
   const isLinkedIn = tabUrl.includes("linkedin.com/in/");
-  const isUpwork = tabUrl.includes("upwork.com/freelancers/") || tabUrl.includes("upwork.com/fl/");
+  const isUpwork =
+    tabUrl.includes("upwork.com/freelancers/") ||
+    tabUrl.includes("upwork.com/fl/");
   const isFiverr = tabUrl.includes("fiverr.com/");
   if (!(isLinkedIn || isUpwork || isFiverr)) {
     setStatus("Open a LinkedIn, Upwork, or Fiverr profile.", "error");
@@ -241,6 +264,7 @@ async function scrapeAndDisplay(showLoading = true) {
       location: data.location || null,
       company: data.company || null,
       jobTitle: data.jobTitle || null,
+      experience: data.experience || null,
       email: data.email || null,
       phone: data.phone || null,
       profileUrl: data.profileUrl || tabUrl,
@@ -253,13 +277,19 @@ async function scrapeAndDisplay(showLoading = true) {
     fields.location.textContent = latestData.location || "—";
     fields.company.textContent = latestData.company || "—";
     fields.jobTitle.textContent = latestData.jobTitle || "—";
+    fields.experience.textContent = latestData.experience || "—";
     fields.email.textContent = latestData.email || "—";
     fields.phone.textContent = latestData.phone || "—";
     urlEl.textContent = latestData.profileUrl || tabUrl;
 
     profileCard.classList.add("visible");
-    const count = Object.values(latestData).filter((v) => v && v !== "—" && typeof v === "string").length;
-    setStatus(`✅ ${latestData.platform} profile loaded (${count} fields).`, "success");
+    const count = Object.values(latestData).filter(
+      (v) => v && v !== "—" && typeof v === "string",
+    ).length;
+    setStatus(
+      `✅ ${latestData.platform} profile loaded (${count} fields).`,
+      "success",
+    );
 
     // Auto-select pipeline based on platform
     autoSelectPipeline(latestData.platform, allPipelines);
@@ -302,6 +332,7 @@ syncBtn.addEventListener("click", async () => {
         location: latestData.location,
         company: latestData.company,
         jobTitle: latestData.jobTitle,
+        experience: latestData.experience,
         email: latestData.email,
         phone: latestData.phone,
       }),

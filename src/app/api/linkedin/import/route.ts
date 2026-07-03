@@ -43,23 +43,39 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401, headers });
+      return NextResponse.json(
+        { error: "Unauthorized." },
+        { status: 401, headers },
+      );
     }
 
     const body = await req.json();
-    const { linkedInUrl, pipelineId, name, headline, location, source, email, phone, company, jobTitle, platform } = body ?? {};
+    const {
+      linkedInUrl,
+      pipelineId,
+      name,
+      headline,
+      location,
+      source,
+      email,
+      phone,
+      company,
+      jobTitle,
+      experience,
+      platform,
+    } = body ?? {};
 
     if (!linkedInUrl?.trim()) {
       return NextResponse.json(
         { error: "linkedInUrl is required." },
-        { status: 400, headers }
+        { status: 400, headers },
       );
     }
 
     if (!pipelineId?.trim()) {
       return NextResponse.json(
         { error: "pipelineId is required." },
-        { status: 400, headers }
+        { status: 400, headers },
       );
     }
 
@@ -73,10 +89,14 @@ export async function POST(req: NextRequest) {
 
     // Still accept any URL that has a profile path
     // Only reject if it's clearly not a profile
-    
+
     // ── Resolve leadSource from platform or URL ───────────────────────────────
-    function resolveLeadSource(platform: string | null | undefined, url: string): string {
-      if (platform === "LinkedIn" || url.includes("linkedin.com")) return "LinkedIn";
+    function resolveLeadSource(
+      platform: string | null | undefined,
+      url: string,
+    ): string {
+      if (platform === "LinkedIn" || url.includes("linkedin.com"))
+        return "LinkedIn";
       if (platform === "Upwork" || url.includes("upwork.com")) return "Upwork";
       if (platform === "Fiverr" || url.includes("fiverr.com")) return "Fiverr";
       return "Other";
@@ -93,14 +113,14 @@ export async function POST(req: NextRequest) {
       const rawName = (name as string | null)?.trim() ?? "";
       const nameParts = rawName.split(/\s+/).filter(Boolean);
       profile = {
-        firstName:   nameParts[0] ?? "Unknown",
-        lastName:    nameParts.slice(1).join(" ") || null as any,
-        headline:    jobTitle?.trim() || headline?.trim() || null,
+        firstName: nameParts[0] ?? "Unknown",
+        lastName: nameParts.slice(1).join(" ") || (null as any),
+        headline: jobTitle?.trim() || headline?.trim() || null,
         linkedInUrl: url,
-        email:       email?.trim() || null,   // scraped from page by extension
-        phone:       phone?.trim() || null,   // scraped from page by extension
-        location:    location?.trim() || null,
-        summary:     null,
+        email: email?.trim() || null, // scraped from page by extension
+        phone: phone?.trim() || null, // scraped from page by extension
+        location: location?.trim() || null,
+        summary: null,
       };
     } else {
       // Pattern 2: server-side import by URL — call Apify to scrape.
@@ -117,18 +137,20 @@ export async function POST(req: NextRequest) {
       pipelineId: pipelineId.trim(),
       createdById: session.id,
       company: company?.trim() || null,
+      location: location?.trim() || null,
+      experience: experience?.trim() || null,
       leadSource,
     });
 
     return NextResponse.json(
       { data: lead, message: "LinkedIn profile imported successfully." },
-      { status: 201, headers }
+      { status: 201, headers },
     );
   } catch (err: any) {
     console.error("[POST /api/linkedin/import]", err);
     return NextResponse.json(
       { error: err.message || "Internal server error." },
-      { status: 500, headers }
+      { status: 500, headers },
     );
   }
 }
