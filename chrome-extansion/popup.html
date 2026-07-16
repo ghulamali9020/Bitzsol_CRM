@@ -11,12 +11,10 @@
         padding: 0;
       }
       body {
-        width: 360px;
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        width: 320px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         background: #0f172a;
         color: #e2e8f0;
-        padding: 0;
       }
       .header {
         background: linear-gradient(135deg, #1e40af, #3b82f6);
@@ -42,7 +40,7 @@
         padding: 16px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
       }
       #profile-card {
         display: none;
@@ -74,24 +72,6 @@
         flex: 1;
         word-break: break-word;
         color: #f1f5f9;
-      }
-      .field-row .copy-btn {
-        background: transparent;
-        border: none;
-        color: #64748b;
-        cursor: pointer;
-        padding: 0 4px;
-        border-radius: 4px;
-        font-size: 14px;
-        transition: 0.2s;
-        flex-shrink: 0;
-      }
-      .field-row .copy-btn:hover {
-        background: #334155;
-        color: #e2e8f0;
-      }
-      .field-row .copy-btn.copied {
-        color: #22c55e;
       }
       #profile-url {
         font-size: 11px;
@@ -205,59 +185,36 @@
     <div class="header">
       <div class="dot"></div>
       <h1>Bitzsol CRM</h1>
-      <span
-        id="platform-badge"
-        style="
-          display: none;
-          font-size: 11px;
-          font-weight: 700;
-          padding: 3px 8px;
-          border-radius: 20px;
-          flex-shrink: 0;
-        "
-      ></span>
     </div>
     <div class="body">
       <div id="profile-card">
         <div class="field-row">
-          <span class="label">👤 Name</span>
-          <span class="value" id="profile-name">—</span>
-          <button class="copy-btn" data-target="profile-name">📋</button>
+          <span class="label">👤 Name</span
+          ><span class="value" id="profile-name">—</span>
         </div>
         <div class="field-row">
-          <span class="label">💼 Headline</span>
-          <span class="value" id="profile-headline">—</span>
-          <button class="copy-btn" data-target="profile-headline">📋</button>
+          <span class="label">💼 Headline</span
+          ><span class="value" id="profile-headline">—</span>
         </div>
         <div class="field-row">
-          <span class="label">🌍 Location</span>
-          <span class="value" id="profile-location">—</span>
-          <button class="copy-btn" data-target="profile-location">📋</button>
+          <span class="label">🌍 Location</span
+          ><span class="value" id="profile-location">—</span>
         </div>
         <div class="field-row">
-          <span class="label">🏢 Company</span>
-          <span class="value" id="profile-company">—</span>
-          <button class="copy-btn" data-target="profile-company">📋</button>
+          <span class="label">🏢 Company</span
+          ><span class="value" id="profile-company">—</span>
         </div>
         <div class="field-row">
-          <span class="label">💼 Job Title</span>
-          <span class="value" id="profile-job-title">—</span>
-          <button class="copy-btn" data-target="profile-job-title">📋</button>
+          <span class="label">💼 Job Title</span
+          ><span class="value" id="profile-job-title">—</span>
         </div>
         <div class="field-row">
-          <span class="label">🧭 Experience</span>
-          <span class="value" id="profile-experience">—</span>
-          <button class="copy-btn" data-target="profile-experience">📋</button>
+          <span class="label">✉️ Email</span
+          ><span class="value" id="profile-email">—</span>
         </div>
         <div class="field-row">
-          <span class="label">✉️ Email</span>
-          <span class="value" id="profile-email">—</span>
-          <button class="copy-btn" data-target="profile-email">📋</button>
-        </div>
-        <div class="field-row">
-          <span class="label">📞 Phone</span>
-          <span class="value" id="profile-phone">—</span>
-          <button class="copy-btn" data-target="profile-phone">📋</button>
+          <span class="label">📞 Phone</span
+          ><span class="value" id="profile-phone">—</span>
         </div>
         <div id="profile-url">—</div>
       </div>
@@ -270,7 +227,7 @@
         <button id="copyAllBtn">📋 Copy All</button>
         <button id="syncBtn">Sync Lead</button>
       </div>
-      <div class="hint">Supports LinkedIn · Upwork · Fiverr profiles</div>
+      <div class="hint">Supports LinkedIn · Upwork · Fiverr</div>
     </div>
     <script src="popup.js"></script>
   </body>

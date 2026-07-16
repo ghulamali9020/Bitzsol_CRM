@@ -1,43 +1,35 @@
 {
-    "manifest_version": 3,
-    "name": "Bitzsol CRM",
-    "version": "1.1",
-    "description": "Sync LinkedIn, Upwork, and Fiverr leads directly into Bitzsol CRM",
-    "permissions": [
-        "activeTab",
-        "storage",
-        "scripting",
-        "cookies",
-        "tabs"
-    ],
-    "host_permissions": [
-        "https://www.linkedin.com/*",
-        "https://linkedin.com/*",
-        "https://www.upwork.com/*",
-        "https://upwork.com/*",
+  "manifest_version": 3,
+  "name": "Bitzsol CRM",
+  "version": "1.1",
+  "description": "Sync LinkedIn, Upwork, and Fiverr leads directly into Bitzsol CRM",
+  "permissions": ["activeTab", "storage", "scripting", "cookies", "tabs"],
+  "host_permissions": [
+    "https://www.linkedin.com/*",
+    "https://linkedin.com/*",
+    "https://www.upwork.com/*",
+    "https://upwork.com/*",
+    "https://www.fiverr.com/*",
+    "https://fiverr.com/*",
+    "http://localhost:3000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.linkedin.com/in/*",
+        "https://linkedin.com/in/*",
+        "https://www.upwork.com/freelancers/*",
+        "https://www.upwork.com/fl/*",
         "https://www.fiverr.com/*",
-        "https://fiverr.com/*",
-        "http://localhost:3000/*"
-    ],
-    "action": {
-        "default_popup": "popup.html"
-    },
-    "background": {
-        "service_worker": "background.js"
-    },
-    "content_scripts": [
-        {
-            "matches": [
-                "https://www.linkedin.com/in/*",
-                "https://linkedin.com/in/*",
-                "https://www.upwork.com/freelancers/*",
-                "https://www.upwork.com/fl/*",
-                "https://www.fiverr.com/*",
-                "https://fiverr.com/*"
-            ],
-            "js": [
-                "content.js"
-            ]
-        }
-    ]
+        "https://fiverr.com/*"
+      ],
+      "js": ["content.js"]
+    }
+  ]
 }

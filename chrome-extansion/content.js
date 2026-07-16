@@ -3,14 +3,7 @@ if (!window.__bitzsol_crm_loaded) {
 
   console.log("[Bitzsol CRM] Content script loaded on:", window.location.href);
 
-  function detectPlatform(url) {
-    if (!url) return "Other";
-    if (url.includes("linkedin.com")) return "LinkedIn";
-    if (url.includes("upwork.com")) return "Upwork";
-    if (url.includes("fiverr.com")) return "Fiverr";
-    return "Other";
-  }
-
+  // ─── Helpers ──────────────────────────────────────────────────────────────
   function normalizeText(value) {
     return (value || "")
       .replace(/\s+/g, " ")
@@ -18,14 +11,26 @@ if (!window.__bitzsol_crm_loaded) {
       .trim();
   }
 
-  function findElement(selectors, container = document) {
-    for (const sel of selectors) {
-      const el = container.querySelector(sel);
-      if (el) return el;
-    }
-    return null;
+  function waitForElement(selector, timeout = 4000) {
+    return new Promise((resolve) => {
+      const existing = document.querySelector(selector);
+      if (existing) return resolve(existing);
+      const observer = new MutationObserver(() => {
+        const el = document.querySelector(selector);
+        if (el) {
+          observer.disconnect();
+          resolve(el);
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => {
+        observer.disconnect();
+        resolve(null);
+      }, timeout);
+    });
   }
 
+  // ─── Extract from JSON‑LD ──────────────────────────────────────────────
   function extractFromJsonLd() {
     const result = {
       name: null,
@@ -33,14 +38,12 @@ if (!window.__bitzsol_crm_loaded) {
       company: null,
       location: null,
     };
-
     for (const script of document.querySelectorAll(
       'script[type="application/ld+json"]',
     )) {
       try {
         const data = JSON.parse(script.textContent);
         const nodes = data["@graph"] ? data["@graph"] : [data];
-
         for (const node of nodes) {
           if (node["@type"] === "Person") {
             result.name = result.name || node.name || null;
@@ -56,193 +59,47 @@ if (!window.__bitzsol_crm_loaded) {
             }
           }
         }
-      } catch (error) {
-        // ignore malformed JSON-LD
-      }
+      } catch (_) {}
     }
-
     return result;
   }
 
-  function extractExperienceData() {
-    const containers = [
-      document.querySelector('section[id*="experience"]'),
-      document.querySelector('section[data-section="experience"]'),
-      document.querySelector('section[data-view-name="profile-experience"]'),
-      document.querySelector('div[data-section="experience"]'),
-      document.querySelector("main"),
-    ].filter(Boolean);
+  // ─── Main LinkedIn scraper ──────────────────────────────────────────────
+  async function scrapeLinkedIn() {
+    console.log("[Bitzsol CRM] Starting LinkedIn scrape...");
 
-    const items = [];
+    // Wait for the main container
+    await waitForElement(".pv-top-card, .pv-top-card-v2-section", 3000);
 
-    for (const container of containers) {
-      const roleNodes = [
-        ...container.querySelectorAll(
-          ".pvs-entity, .pv-entity__position-group-role-item, .pv-profile-section__card-item, .pvs-list__paged-list-item, li",
-        ),
+    // ── 1. JSON‑LD (most reliable) ──────────────────────────────────────
+    let ld = extractFromJsonLd();
+    console.log("[Bitzsol CRM] JSON‑LD data:", ld);
+
+    // ── 2. Name ──────────────────────────────────────────────────────────
+    let name = ld.name;
+    if (!name) {
+      const nameSelectors = [
+        "h1.text-heading-xlarge",
+        "h1.top-card-layout__title",
+        "h1.pv-top-card-section__name",
+        "h1",
       ];
-
-      for (const node of roleNodes) {
-        const titleEl = node.querySelector(
-          "h3 span[aria-hidden='true'], h3 span, .t-16.t-black--bold, .mr1.t-bold, .t-bold",
-        );
-        const companyEl = node.querySelector(
-          ".pv-entity__secondary-title, .pv-entity__company-summary-info a, .pv-entity__company-summary-info, .pv-entity__secondary-title span, .t-14.t-black--light",
-        );
-
-        let role = normalizeText(titleEl?.innerText || "");
-        let company = normalizeText(companyEl?.innerText || "");
-        if (company && company.toLowerCase().includes("full-time")) {
-          company = company.replace(/full-time/i, "").trim();
-        }
-
-        const text = normalizeText(node.innerText || "");
-        if (!role && !company) continue;
-
-        if (!company) {
-          const atMatch = text.match(/at\s+(.{2,80})/i);
-          if (atMatch) company = normalizeText(atMatch[1]).split(/\s+\|\s+/)[0];
-        }
-
-        if (!role) {
-          const lines = text
-            .split(/\n|•|·/)
-            .map((line) => normalizeText(line))
-            .filter(Boolean);
-          const firstLine = lines[0] || "";
-          if (firstLine) role = firstLine.replace(/\s+at\s+.+$/i, "").trim();
-        }
-
-        if (role) {
-          items.push({ role, company });
+      for (const sel of nameSelectors) {
+        const el = document.querySelector(sel);
+        if (el) {
+          name = normalizeText(el.innerText);
           break;
         }
       }
-      if (items.length) break;
     }
-
-    return items;
-  }
-
-  function extractTopCardValues(topCard) {
-    const result = {
-      headline: null,
-      company: null,
-      location: null,
-      jobTitle: null,
-    };
-
-    if (!topCard) return result;
-
-    const headlineEl = findElement(
-      [
-        ".text-body-medium.break-words",
-        ".pv-text-details__left-panel .text-body-medium",
-        "h2.text-body-medium",
-        ".pv-top-card--list .text-body-medium",
-        ".pv-top-card-v2-section__headline",
-      ],
-      topCard,
-    );
-    if (headlineEl) result.headline = normalizeText(headlineEl.innerText || "");
-
-    const companyEl = findElement(
-      [
-        ".pv-top-card-v2-section__company-name a",
-        'a[href*="/company/"]',
-        ".pv-top-card__experience-list a",
-        ".pv-top-card__experience-list span",
-      ],
-      topCard,
-    );
-    if (companyEl) {
-      const companyText = normalizeText(
-        companyEl.innerText || companyEl.textContent || "",
-      );
-      if (companyText && !/linkedin/i.test(companyText))
-        result.company = companyText;
-    }
-
-    const topCardText = normalizeText(topCard.innerText || "");
-    const lines = topCardText
-      .split("\n")
-      .map((line) => normalizeText(line))
-      .filter((line) => line && !/^\d+ connections?$/i.test(line));
-
-    if (!result.headline && lines.length > 1) {
-      result.headline = lines[1];
-    }
-
-    if (!result.location && lines.length > 2) {
-      const candidate = lines[lines.length - 1];
-      if (
-        candidate.includes(",") ||
-        /\b(united states|india|uk|canada|germany|france)\b/i.test(candidate)
-      ) {
-        result.location = candidate;
-      }
-    }
-
-    const atMatch = topCardText.match(/(.{2,80})\s+at\s+(.{2,80})/i);
-    if (atMatch) {
-      if (!result.jobTitle) result.jobTitle = normalizeText(atMatch[1]);
-      if (!result.company) result.company = normalizeText(atMatch[2]);
-    }
-
-    const locationEl = findElement(
-      [
-        "span.text-body-small.inline.t-black--light.break-words",
-        ".pv-top-card__location",
-        ".pv-top-card-v2-section__location",
-        ".pv-top-card--list .t-black--light",
-        ".pv-text-details__left-panel .t-black--light",
-        "[data-generated-location]",
-        ".text-body-small.inline.t-black--light",
-      ],
-      topCard,
-    );
-    if (locationEl && !result.location)
-      result.location = normalizeText(
-        locationEl.innerText || locationEl.textContent || "",
-      );
-
-    return result;
-  }
-
-  async function scrapeLinkedInPage() {
-    let name = null;
-    let headline = null;
-    let company = null;
-    let jobTitle = null;
-    let location = null;
-    let experience = null;
-
-    const ldData = extractFromJsonLd();
-    name = ldData.name || null;
-    headline = ldData.headline || null;
-    company = ldData.company || null;
-    location = ldData.location || null;
-
     if (!name) {
-      const raw = document.title.split("|")[0]?.trim();
-      const titleName = raw && raw.toLowerCase() !== "linkedin" ? raw : null;
-      const h1Name = document.querySelector("h1")?.innerText?.trim() || null;
-      name = titleName || h1Name || null;
+      const titleParts = document.title.split("|");
+      if (titleParts.length > 1) name = normalizeText(titleParts[0]);
     }
+    console.log("[Bitzsol CRM] Name:", name);
 
-    const topCard = findElement([
-      ".pv-top-card",
-      ".pv-top-card-v2-section",
-      "[data-view-name='profile-topcard']",
-      "main",
-    ]);
-
-    const topCardValues = extractTopCardValues(topCard);
-    headline = headline || topCardValues.headline;
-    company = company || topCardValues.company;
-    location = location || topCardValues.location;
-    jobTitle = jobTitle || topCardValues.jobTitle;
-
+    // ── 3. Headline ──────────────────────────────────────────────────────
+    let headline = ld.headline;
     if (!headline) {
       const headlineSelectors = [
         ".text-body-medium.break-words",
@@ -250,119 +107,121 @@ if (!window.__bitzsol_crm_loaded) {
         "h2.text-body-medium",
         ".pv-top-card--list .text-body-medium",
         ".pv-top-card-v2-section__headline",
+        ".pv-top-card__headline",
       ];
-      const el = findElement(headlineSelectors);
-      if (el) headline = normalizeText(el.innerText || "");
-      if (!headline) {
-        const h1 = document.querySelector("h1");
-        if (h1 && h1.parentElement) {
-          const siblings = [...h1.parentElement.children];
-          const idx = siblings.indexOf(h1);
-          for (let i = idx + 1; i < siblings.length; i++) {
-            const text = normalizeText(siblings[i]?.innerText || "");
-            if (
-              text.length > 10 &&
-              !text.match(/^[·•]/) &&
-              !text.match(/^\d+ connections?$/i)
-            ) {
-              headline = text;
-              break;
-            }
+      for (const sel of headlineSelectors) {
+        const el = document.querySelector(sel);
+        if (el) {
+          const text = normalizeText(el.innerText);
+          // Skip connection badges
+          if (!/^[·•]\s*(1st|2nd|3rd)/i.test(text)) {
+            headline = text;
+            break;
           }
         }
       }
     }
+    console.log("[Bitzsol CRM] Headline:", headline);
 
-    if (!name) {
-      const nameEl = document.querySelector("h1.text-heading-xlarge, h1");
-      name = normalizeText(nameEl?.innerText || "") || name;
-    }
-
-    if (!company || !jobTitle) {
-      const experienceItems = extractExperienceData();
-      if (experienceItems.length) {
-        const first = experienceItems[0];
-        jobTitle = jobTitle || first.role || null;
-        company = company || first.company || null;
-      }
-    }
-
+    // ── 4. Location ──────────────────────────────────────────────────────
+    let location = ld.location;
     if (!location) {
       const locationSelectors = [
         ".pv-top-card__location",
         ".pv-top-card-v2-section__location",
-        ".pv-top-card--list .t-black--light",
-        ".pv-text-details__left-panel .t-black--light",
-        ".t-black--light.t-normal",
-        '.not-first-middot span[aria-hidden="true"]',
-        "[data-generated-location]",
         "span.text-body-small.inline.t-black--light.break-words",
+        ".pv-text-details__left-panel .t-black--light",
+        "[data-generated-location]",
+        ".pv-top-card--list .t-black--light",
       ];
-      const locationEl = findElement(locationSelectors, topCard || document);
-      if (locationEl) {
-        const value = normalizeText(
-          locationEl.innerText || locationEl.textContent || "",
-        );
-        if (value && value.length > 2 && !value.match(/^\d/)) location = value;
+      for (const sel of locationSelectors) {
+        const el = document.querySelector(sel);
+        if (el) {
+          location = normalizeText(el.innerText);
+          break;
+        }
       }
     }
+    console.log("[Bitzsol CRM] Location:", location);
 
-    if (!location) {
-      const allText = document.body.innerText || "";
-      const lines = allText
-        .split("\n")
-        .map((line) => normalizeText(line))
-        .filter((line) => line.length > 3);
+    // ── 5. Company & Job Title ──────────────────────────────────────────
+    let company = ld.company;
+    let jobTitle = null;
 
-      for (const line of lines) {
-        if (
-          /^[A-Za-z\s\-]+,\s*[A-Za-z\s]+$/.test(line) &&
-          !line.includes("LinkedIn") &&
-          !line.includes("Profile")
-        ) {
-          location = line;
+    // First try the top card company link
+    if (!company) {
+      const companySelectors = [
+        ".pv-top-card-v2-section__company-name a",
+        ".pv-top-card__experience-list a",
+        ".pv-top-card__experience-list span",
+      ];
+      for (const sel of companySelectors) {
+        const el = document.querySelector(sel);
+        if (el) {
+          const text = normalizeText(el.innerText);
+          const parts = text.split(/\s+at\s+/i);
+          if (parts.length === 2) {
+            jobTitle = parts[0];
+            company = parts[1];
+          } else {
+            company = text;
+          }
           break;
         }
       }
     }
 
+    // If not found, look in experience section
     if (!company || !jobTitle) {
-      const experienceItems = extractExperienceData();
-      if (experienceItems.length) {
-        const first = experienceItems[0];
-        jobTitle = jobTitle || first.role || null;
-        company = company || first.company || null;
+      const expSection = document.querySelector(
+        "section#experience, section[data-section='experience'], section[data-view-name='profile-experience'], div[data-section='experience'], main",
+      );
+      if (expSection) {
+        const items = expSection.querySelectorAll(
+          ".pvs-list__paged-list-item, .pv-entity__position-group-role-item, .pv-profile-section__card-item, li",
+        );
+        for (const item of items) {
+          const titleEl = item.querySelector(
+            "h3 span[aria-hidden='true'], h3 span, .t-16.t-black--bold, .mr1.t-bold, .t-bold",
+          );
+          const companyEl = item.querySelector(
+            ".pv-entity__secondary-title, .pv-entity__company-summary-info a, .pv-entity__company-summary-info, .t-14.t-black--light",
+          );
+          let role = titleEl ? normalizeText(titleEl.innerText) : null;
+          let comp = companyEl ? normalizeText(companyEl.innerText) : null;
+          if (comp && comp.toLowerCase().includes("full-time")) {
+            comp = comp.replace(/full-time/i, "").trim();
+          }
+          if (!comp) {
+            const text = normalizeText(item.innerText);
+            const atMatch = text.match(/at\s+(.{2,80})/i);
+            if (atMatch) comp = normalizeText(atMatch[1]).split(/\s+\|\s+/)[0];
+          }
+          if (role && !jobTitle) jobTitle = role;
+          if (comp && !company) company = comp;
+          if (jobTitle && company) break;
+        }
       }
     }
 
-    if (!experience) {
-      const experienceItems = extractExperienceData();
-      if (experienceItems.length) {
-        experience = experienceItems
-          .slice(0, 2)
-          .map((item) =>
-            item.role && item.company
-              ? `${item.role} @ ${item.company}`
-              : item.role || item.company || "",
-          )
-          .filter(Boolean)
-          .join(" | ");
-      }
-    }
-
+    // If jobTitle still null, use headline
     if (!jobTitle && headline) jobTitle = headline;
-    if (!headline && jobTitle) headline = jobTitle;
+    console.log("[Bitzsol CRM] Job Title:", jobTitle);
+    console.log("[Bitzsol CRM] Company:", company);
 
+    // ── 6. Email & Phone ──────────────────────────────────────────────────
     let email = null;
     let phone = null;
     let openedModal = false;
 
+    // Check if modal already open
     const modalExists = !!(
       document.querySelector("#artdeco-modal-outlet") ||
       document.querySelector(".artdeco-modal")
     );
 
     if (!modalExists) {
+      // Find contact info button
       const contactBtn =
         document.querySelector('a[href*="/overlay/contact-info/"]') ||
         document.querySelector('a[href*="contact-info"]') ||
@@ -374,38 +233,21 @@ if (!window.__bitzsol_crm_loaded) {
       if (contactBtn) {
         contactBtn.click();
         openedModal = true;
-        await new Promise((resolve) => {
-          let elapsed = 0;
-          const interval = setInterval(() => {
-            const hasModal =
-              document.querySelector("#artdeco-modal-outlet") ||
-              document.querySelector(".artdeco-modal");
-            if (hasModal || elapsed >= 2500) {
-              clearInterval(interval);
-              resolve();
-            }
-            elapsed += 100;
-          }, 100);
-        });
+        console.log(
+          "[Bitzsol CRM] Clicked contact info button, waiting for modal...",
+        );
+        await waitForElement("#artdeco-modal-outlet, .artdeco-modal", 4000);
       }
     }
 
-    const isContactOverlay = window.location.href.includes(
-      "/overlay/contact-info/",
+    const modal = document.querySelector(
+      "#artdeco-modal-outlet, .artdeco-modal, .pv-contact-info",
     );
-
-    const emailSelectors = [
-      '#artdeco-modal-outlet a[href^="mailto:"]',
-      '.pv-contact-info__contact-type a[href^="mailto:"]',
-      '.ci-email a[href^="mailto:"]',
-      '.pv-contact-info a[href^="mailto:"]',
-      '.artdeco-modal a[href^="mailto:"]',
-      'section[class*="contact"] a[href^="mailto:"]',
-    ];
-    if (isContactOverlay) emailSelectors.unshift('a[href^="mailto:"]');
-    for (const sel of emailSelectors) {
-      const link = document.querySelector(sel);
-      if (link) {
+    if (modal) {
+      console.log("[Bitzsol CRM] Modal found, extracting email/phone...");
+      // Email
+      const emailLinks = modal.querySelectorAll('a[href^="mailto:"]');
+      for (const link of emailLinks) {
         const addr = normalizeText(link.href.replace("mailto:", ""));
         if (
           addr.includes("@") &&
@@ -416,68 +258,50 @@ if (!window.__bitzsol_crm_loaded) {
           break;
         }
       }
-    }
+      if (!email) {
+        const text = modal.innerText;
+        const match = text.match(
+          /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/,
+        );
+        if (match) email = match[0];
+      }
 
-    const phoneSelectors = [
-      '#artdeco-modal-outlet a[href^="tel:"]',
-      '.pv-contact-info__contact-type a[href^="tel:"]',
-      '.ci-phone a[href^="tel:"]',
-      '.pv-contact-info a[href^="tel:"]',
-      '.artdeco-modal a[href^="tel:"]',
-      'section[class*="contact"] a[href^="tel:"]',
-      '.pv-contact-info__contact-item a[href^="tel:"]',
-      '.contact-info__phone a[href^="tel:"]',
-    ];
-    if (isContactOverlay) phoneSelectors.unshift('a[href^="tel:"]');
-    for (const sel of phoneSelectors) {
-      const link = document.querySelector(sel);
-      if (link) {
+      // Phone
+      const phoneLinks = modal.querySelectorAll('a[href^="tel:"]');
+      for (const link of phoneLinks) {
         const num = normalizeText(link.href.replace("tel:", ""));
         if (num.length > 5) {
           phone = num;
           break;
         }
       }
-    }
-
-    if (!phone) {
-      const modal = document.querySelector(
-        "#artdeco-modal-outlet, .artdeco-modal, .pv-contact-info",
-      );
-      if (modal) {
-        const text = normalizeText(modal.innerText || "");
+      if (!phone) {
+        const text = modal.innerText;
         const phoneMatch = text.match(/Phone\s*[:|]\s*([+\d\s()-]+)/i);
-        if (phoneMatch) {
-          phone = phoneMatch[1].trim();
-        } else {
-          const regex =
-            /(\+\d{1,3}[\s-]?)?\(?\d{3,5}\)?[\s-]?\d{3,5}[\s-]?\d{3,5}/;
-          const match = text.match(regex);
-          if (match) phone = match[0];
-        }
-      }
-    }
-
-    if (!phone) {
-      const bodyText = normalizeText(document.body.innerText || "");
-      const lines = bodyText.split("\n").filter((line) => line.length > 5);
-      for (const line of lines) {
-        if (/Phone/i.test(line)) {
-          const num = line.replace(/Phone\s*[:|]/i, "").trim();
-          if (num.length > 5 && /\d/.test(num)) {
-            phone = num;
-            break;
-          }
-        }
+        if (phoneMatch) phone = phoneMatch[1].trim();
       }
       if (!phone) {
         const regex =
           /(\+\d{1,3}[\s-]?)?\(?\d{3,5}\)?[\s-]?\d{3,5}[\s-]?\d{3,5}/;
-        const match = bodyText.match(regex);
+        const match = modal.innerText.match(regex);
         if (match) phone = match[0];
       }
+    } else {
+      console.log(
+        "[Bitzsol CRM] Modal not found, scanning page for email/phone...",
+      );
+      const bodyText = document.body.innerText;
+      const emailMatch = bodyText.match(
+        /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/,
+      );
+      if (emailMatch) email = emailMatch[0];
+      const phoneRegex =
+        /(\+\d{1,3}[\s-]?)?\(?\d{3,5}\)?[\s-]?\d{3,5}[\s-]?\d{3,5}/;
+      const phoneMatch = bodyText.match(phoneRegex);
+      if (phoneMatch) phone = phoneMatch[0];
     }
 
+    // Close modal if we opened it
     if (openedModal) {
       const closeBtn =
         document.querySelector(
@@ -491,45 +315,123 @@ if (!window.__bitzsol_crm_loaded) {
       if (closeBtn) closeBtn.click();
     }
 
+    console.log("[Bitzsol CRM] Email:", email);
+    console.log("[Bitzsol CRM] Phone:", phone);
+
+    // Clean up profile URL
     let profileUrl = window.location.href;
     if (profileUrl.includes("/overlay/contact-info")) {
       profileUrl = profileUrl.split("/overlay/contact-info")[0];
     }
 
-    const platform = detectPlatform(profileUrl);
-
-    console.log("[Bitzsol CRM] Scraped data:", {
-      name,
-      headline,
-      location,
-      company,
-      jobTitle,
-      experience,
-      email,
-      phone,
-      profileUrl,
-      platform,
-    });
-
-    return {
-      name,
-      headline,
-      location,
-      company,
-      jobTitle,
-      experience,
-      email,
-      phone,
-      profileUrl,
-      platform,
+    const result = {
+      name: name || null,
+      headline: headline || null,
+      location: location || null,
+      company: company || null,
+      jobTitle: jobTitle || null,
+      email: email || null,
+      phone: phone || null,
+      profileUrl: profileUrl,
+      platform: "LinkedIn",
     };
+
+    console.log("[Bitzsol CRM] Final scraped data:", result);
+    return result;
   }
 
+  // ─── Upwork Scraper ──────────────────────────────────────────────────────
+  async function scrapeUpwork() {
+    console.log("[Bitzsol CRM] Scraping Upwork...");
+    const result = {
+      name: null,
+      headline: null,
+      location: null,
+      company: null,
+      jobTitle: null,
+      email: null,
+      phone: null,
+      platform: "Upwork",
+      profileUrl: window.location.href,
+    };
+    const nameEl = document.querySelector(
+      'h1[data-test="freelancer-name"], h1.profile-name, h1',
+    );
+    if (nameEl) result.name = normalizeText(nameEl.innerText);
+    const titleEl = document.querySelector(
+      'div[data-test="freelancer-title"], .profile-title',
+    );
+    if (titleEl) result.headline = normalizeText(titleEl.innerText);
+    if (result.headline) result.jobTitle = result.headline;
+    const locEl = document.querySelector(
+      'span[data-test="location"], .profile-location',
+    );
+    if (locEl) result.location = normalizeText(locEl.innerText);
+    const companyMatch = result.headline?.match(/at\s+(.{2,80})/i);
+    if (companyMatch) result.company = normalizeText(companyMatch[1]);
+    console.log("[Bitzsol CRM] Upwork data:", result);
+    return result;
+  }
+
+  // ─── Fiverr Scraper ──────────────────────────────────────────────────────
+  async function scrapeFiverr() {
+    console.log("[Bitzsol CRM] Scraping Fiverr...");
+    const result = {
+      name: null,
+      headline: null,
+      location: null,
+      company: null,
+      jobTitle: null,
+      email: null,
+      phone: null,
+      platform: "Fiverr",
+      profileUrl: window.location.href,
+    };
+    const nameEl = document.querySelector(
+      "h1.seller-name, h1.profile-name, h1",
+    );
+    if (nameEl) result.name = normalizeText(nameEl.innerText);
+    const descEl = document.querySelector(
+      "p.seller-description, .profile-description",
+    );
+    if (descEl) result.headline = normalizeText(descEl.innerText);
+    if (result.headline) result.jobTitle = result.headline;
+    const locEl = document.querySelector(
+      "span.seller-location, .profile-location",
+    );
+    if (locEl) result.location = normalizeText(locEl.innerText);
+    const companyMatch = result.headline?.match(/at\s+(.{2,80})/i);
+    if (companyMatch) result.company = normalizeText(companyMatch[1]);
+    console.log("[Bitzsol CRM] Fiverr data:", result);
+    return result;
+  }
+
+  // ─── Main dispatcher ────────────────────────────────────────────────────
+  async function scrapePlatform() {
+    const url = window.location.href;
+    if (url.includes("linkedin.com/in/")) {
+      return await scrapeLinkedIn();
+    } else if (
+      url.includes("upwork.com/freelancers/") ||
+      url.includes("upwork.com/fl/")
+    ) {
+      return await scrapeUpwork();
+    } else if (
+      url.includes("fiverr.com/") &&
+      !url.includes("fiverr.com/support")
+    ) {
+      return await scrapeFiverr();
+    } else {
+      return { error: "Unsupported platform" };
+    }
+  }
+
+  // ─── Message Listener ──────────────────────────────────────────────────
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "GET_PROFILE") {
-      scrapeLinkedInPage()
+      scrapePlatform()
         .then((profile) => {
-          console.log("[Bitzsol CRM] Scraped (content):", profile);
+          console.log("[Bitzsol CRM] Sending response:", profile);
           sendResponse(profile);
         })
         .catch((err) => {
@@ -540,7 +442,12 @@ if (!window.__bitzsol_crm_loaded) {
     }
 
     if (request.action === "GET_PLATFORM") {
-      sendResponse({ platform: detectPlatform(window.location.href) });
+      const url = window.location.href;
+      let platform = "Other";
+      if (url.includes("linkedin.com")) platform = "LinkedIn";
+      else if (url.includes("upwork.com")) platform = "Upwork";
+      else if (url.includes("fiverr.com")) platform = "Fiverr";
+      sendResponse({ platform });
       return true;
     }
   });
