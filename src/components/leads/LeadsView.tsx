@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import type { AuthUser, Lead, Pipeline } from "@/types";
 import { LeadModal } from "./LeadModal";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 
 interface Props {
   user: AuthUser | null;
@@ -44,6 +46,8 @@ export function LeadsView({
   const [deleting, setDeleting] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPipelineDropdown, setShowPipelineDropdown] = useState(false);
+
+  useLockBodyScroll(showCreate || !!editLead || !!deleteId);
 
   // Sorting State
   const [sortField, setSortField] = useState<
@@ -806,8 +810,9 @@ export function LeadsView({
 
       {/* Delete confirmation */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-sm w-full shadow-2xl text-crm-text-main">
+        <ModalPortal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-sm w-full shadow-2xl text-crm-text-main animate-in fade-in duration-200">
             <h4 className="text-base font-bold mb-2">Delete Lead?</h4>
             <p className="text-sm text-crm-text-sub mb-6">
               This action cannot be undone. The lead and all associated data
@@ -830,6 +835,7 @@ export function LeadsView({
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {showCreate && (

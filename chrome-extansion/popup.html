@@ -10,12 +10,14 @@
         margin: 0;
         padding: 0;
       }
+
       body {
-        width: 320px;
+        width: 280px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         background: #0f172a;
         color: #e2e8f0;
       }
+
       .header {
         background: linear-gradient(135deg, #1e40af, #3b82f6);
         padding: 14px 16px;
@@ -23,12 +25,14 @@
         align-items: center;
         gap: 10px;
       }
+
       .header h1 {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         color: #fff;
-        flex: 1;
+        letter-spacing: 0.3px;
       }
+
       .header .dot {
         width: 8px;
         height: 8px;
@@ -36,57 +40,74 @@
         background: #22c55e;
         flex-shrink: 0;
       }
+
       .body {
         padding: 16px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
       }
+
+      /* Profile card — hidden until data loads */
       #profile-card {
         display: none;
         background: #1e293b;
         border: 1px solid #334155;
         border-radius: 10px;
         padding: 12px;
-        gap: 4px;
+        gap: 6px;
         flex-direction: column;
       }
+
       #profile-card.visible {
         display: flex;
       }
-      .field-row {
-        display: flex;
-        align-items: flex-start;
-        gap: 6px;
-        font-size: 13px;
-        color: #cbd5e1;
-        line-height: 1.4;
-      }
-      .field-row .label {
-        font-weight: 600;
-        color: #94a3b8;
-        min-width: 68px;
-        flex-shrink: 0;
-      }
-      .field-row .value {
-        flex: 1;
-        word-break: break-word;
-        color: #f1f5f9;
-      }
-      #profile-url {
-        font-size: 11px;
-        color: #3b82f6;
-        word-break: break-all;
+
+      .field-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
         margin-top: 4px;
-        border-top: 1px solid #334155;
-        padding-top: 6px;
       }
+
+      .field-label:first-child {
+        margin-top: 0;
+      }
+
+      .field-input {
+        width: 100%;
+        padding: 6px 8px;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        color: #e2e8f0;
+        font-size: 12px;
+        outline: none;
+      }
+
+      .field-input:focus {
+        border-color: #3b82f6;
+      }
+
+      .field-input::placeholder {
+        color: #475569;
+      }
+
+      #profile-name {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      /* Status / log area */
       #status {
         font-size: 12px;
         color: #94a3b8;
-        min-height: 20px;
+        min-height: 18px;
         text-align: center;
       }
+
       #status.error {
         color: #f87171;
       }
@@ -96,12 +117,15 @@
       #status.loading {
         color: #facc15;
       }
-      .btn-group {
+
+      /* Buttons */
+      .button-row {
         display: flex;
         gap: 8px;
       }
-      .btn-group button {
-        flex: 1;
+
+      #syncBtn,
+      #copyBtn {
         padding: 10px;
         border: none;
         border-radius: 8px;
@@ -112,31 +136,41 @@
           opacity 0.2s,
           transform 0.1s;
       }
-      .btn-group button:active {
-        transform: scale(0.97);
-      }
+
       #syncBtn {
+        flex: 1;
         background: linear-gradient(135deg, #1e40af, #3b82f6);
         color: #fff;
       }
+
+      #copyBtn {
+        flex: 0 0 auto;
+        padding-left: 14px;
+        padding-right: 14px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        color: #e2e8f0;
+      }
+
+      #copyBtn:hover:not(:disabled) {
+        background: #263349;
+      }
+
       #syncBtn:hover:not(:disabled) {
         opacity: 0.9;
       }
-      #syncBtn:disabled {
+      #syncBtn:active:not(:disabled),
+      #copyBtn:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+      #syncBtn:disabled,
+      #copyBtn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
       }
-      #copyAllBtn {
-        background: #334155;
-        color: #e2e8f0;
-      }
-      #copyAllBtn:hover:not(:disabled) {
-        background: #475569;
-      }
-      #copyAllBtn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
+
+      /* Pipeline selector */
+      #pipelineId,
       #pipelineSelect {
         width: 100%;
         padding: 8px 10px;
@@ -147,37 +181,26 @@
         font-size: 13px;
         outline: none;
       }
+
+      #pipelineId:focus,
       #pipelineSelect:focus {
         border-color: #3b82f6;
       }
+
       #pipelineSelect option {
         background: #1e293b;
       }
+
       label {
         font-size: 11px;
         color: #64748b;
-        margin-bottom: -4px;
+        margin-bottom: -6px;
       }
+
       .hint {
         font-size: 11px;
         color: #475569;
         text-align: center;
-      }
-      .spinner {
-        display: inline-block;
-        width: 14px;
-        height: 14px;
-        border: 2px solid #334155;
-        border-top-color: #3b82f6;
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
-        margin-right: 6px;
-        vertical-align: middle;
-      }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
       }
     </style>
   </head>
@@ -186,49 +209,53 @@
       <div class="dot"></div>
       <h1>Bitzsol CRM</h1>
     </div>
+
     <div class="body">
+      <!-- Profile preview (shown after scraping, before sync) — every field
+           is editable so a bad scrape can be corrected before syncing. -->
       <div id="profile-card">
-        <div class="field-row">
-          <span class="label">👤 Name</span
-          ><span class="value" id="profile-name">—</span>
-        </div>
-        <div class="field-row">
-          <span class="label">💼 Headline</span
-          ><span class="value" id="profile-headline">—</span>
-        </div>
-        <div class="field-row">
-          <span class="label">🌍 Location</span
-          ><span class="value" id="profile-location">—</span>
-        </div>
-        <div class="field-row">
-          <span class="label">🏢 Company</span
-          ><span class="value" id="profile-company">—</span>
-        </div>
-        <div class="field-row">
-          <span class="label">💼 Job Title</span
-          ><span class="value" id="profile-job-title">—</span>
-        </div>
-        <div class="field-row">
-          <span class="label">✉️ Email</span
-          ><span class="value" id="profile-email">—</span>
-        </div>
-        <div class="field-row">
-          <span class="label">📞 Phone</span
-          ><span class="value" id="profile-phone">—</span>
-        </div>
-        <div id="profile-url">—</div>
+        <label class="field-label" for="profile-name">Name</label>
+        <input id="profile-name" class="field-input" type="text" placeholder="Full name" />
+
+        <label class="field-label" for="profile-headline">Headline / Job Title</label>
+        <input id="profile-headline" class="field-input" type="text" placeholder="Headline" />
+
+        <label class="field-label" for="profile-company">Company</label>
+        <input id="profile-company" class="field-input" type="text" placeholder="Company" />
+
+        <label class="field-label" for="profile-location">Location</label>
+        <input id="profile-location" class="field-input" type="text" placeholder="Location" />
+
+        <label class="field-label" for="profile-email">Email</label>
+        <input id="profile-email" class="field-input" type="text" placeholder="Email" />
+
+        <label class="field-label" for="profile-phone">Phone</label>
+        <input id="profile-phone" class="field-input" type="text" placeholder="Phone" />
+
+        <label class="field-label" for="profile-url">Profile URL</label>
+        <input id="profile-url" class="field-input" type="text" placeholder="Profile URL" />
       </div>
-      <div id="status">Open a LinkedIn profile to sync</div>
+
+      <!-- Status / log line -->
+      <div id="status">Open a LinkedIn, Upwork, or Fiverr profile to sync</div>
+
+      <!-- Pipeline selector -->
       <label for="pipelineSelect">Pipeline</label>
       <select id="pipelineSelect">
         <option value="">Loading pipelines…</option>
       </select>
-      <div class="btn-group">
-        <button id="copyAllBtn">📋 Copy All</button>
-        <button id="syncBtn">Sync Lead</button>
+
+      <!-- Copy + Sync -->
+      <div class="button-row">
+        <button id="copyBtn" type="button" disabled>Copy</button>
+        <button id="syncBtn" disabled>Sync Lead</button>
       </div>
-      <div class="hint">Supports LinkedIn · Upwork · Fiverr</div>
+
+      <div class="hint">
+        Works on linkedin.com/in/…, upwork.com/freelancers/…, or fiverr.com/…
+      </div>
     </div>
+
     <script src="popup.js"></script>
   </body>
 </html>

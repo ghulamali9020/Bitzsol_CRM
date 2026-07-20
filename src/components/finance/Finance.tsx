@@ -19,6 +19,8 @@ import {
   Search,
 } from "lucide-react";
 import type { AuthUser } from "@/types";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 
 type TransactionType = "income" | "expense";
 type Transaction = {
@@ -61,6 +63,8 @@ export function FinanceView({ user }: Props) {
   const [uploading, setUploading] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useLockBodyScroll(!!showAddModal || !!deleteId);
 
   // Pagination & sorting
   const [currentPage, setCurrentPage] = useState(1);
@@ -782,8 +786,9 @@ export function FinanceView({ user }: Props) {
 
       {/* Delete Confirmation Modal */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-sm w-full shadow-2xl text-crm-text-main animate-in fade-in zoom-in-95 duration-200">
+        <ModalPortal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-sm w-full shadow-2xl text-crm-text-main animate-in fade-in duration-200">
             <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 mx-auto border border-red-500/20">
               <Trash2 className="w-6 h-6 text-red-500" />
             </div>
@@ -815,6 +820,7 @@ export function FinanceView({ user }: Props) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Add Modal */}
@@ -896,8 +902,9 @@ function AddTransactionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="glass p-6 rounded-2xl max-w-md w-full shadow-2xl border border-crm-border/30">
+    <ModalPortal>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="bg-crm-panel p-6 rounded-2xl max-w-md w-full shadow-2xl border border-crm-border max-h-[90vh] overflow-y-auto animate-in fade-in duration-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold text-crm-text-main">
             Add {type === "expense" ? "Expense" : "Income"}
@@ -966,5 +973,6 @@ function AddTransactionModal({
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 }

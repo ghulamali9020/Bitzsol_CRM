@@ -85,12 +85,15 @@ export function Sidebar({
         } ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
         <div className="flex items-center justify-center h-20 border-b border-crm-border">
-          <div className="w-10 h-10 bg-black rounded-2xl flex items-center justify-center shadow-sm ring-1 ring-white/10">
-            <img
-              src="/logo.png"
-              alt="Bitzsol Logo"
-              className="w-6 h-6 object-contain brightness-0 invert"
-            />
+          <div className="relative w-10 h-10 group">
+            <div className="absolute inset-0 rounded-2xl bg-[#0164DA]/35 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative w-10 h-10 bg-black rounded-2xl flex items-center justify-center shadow-sm ring-1 ring-white/10 transition-transform duration-300 group-hover:scale-105">
+              <img
+                src="/logo.png"
+                alt="Bitzsol Logo"
+                className="w-6 h-6 object-contain brightness-0 invert"
+              />
+            </div>
           </div>
           {!isFinanceRole && (
             <button
@@ -138,7 +141,7 @@ export function Sidebar({
               <p className="text-[11px] font-bold text-crm-text-sub uppercase tracking-[0.32em] px-3 mb-3">
                 Manage Listings
               </p>
-              {visibleNavItems.map(({ label, icon: Icon }) => {
+              {visibleNavItems.map(({ label, icon: Icon }, i) => {
                 const active = activeTab === label;
                 return (
                   <button
@@ -148,14 +151,22 @@ export function Sidebar({
                       onTabChange(label);
                       onClose();
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-bold transition-all duration-300 cursor-pointer ${
+                    style={{ "--stagger-delay": `${i * 60}ms` } as React.CSSProperties}
+                    className={`stagger-item animate-fade-in-up group relative w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-bold transition-all duration-300 cursor-pointer overflow-hidden ${
                       active
-                        ? "bg-crm-panel-hover text-[#0164DA] border-l-4 border-[#0164DA] pl-4 shadow-sm"
-                        : "text-crm-text-sub hover:bg-crm-panel-hover hover:text-crm-text-main"
+                        ? "bg-crm-panel-hover text-[#0164DA] pl-4 shadow-sm"
+                        : "text-crm-text-sub hover:bg-crm-panel-hover hover:text-crm-text-main hover:pl-4"
                     }`}
                   >
+                    <span
+                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r-full bg-[#0164DA] transition-all duration-300 ease-out ${
+                        active ? "h-6 opacity-100" : "h-0 opacity-0"
+                      }`}
+                    />
                     <div className="flex items-center gap-3">
-                      <Icon className="w-4 h-4" />
+                      <Icon
+                        className={`w-4 h-4 transition-transform duration-300 ${active ? "scale-110" : "group-hover:scale-110"}`}
+                      />
                       <span>{label}</span>
                     </div>
                   </button>

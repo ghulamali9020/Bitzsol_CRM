@@ -16,6 +16,8 @@ import {
   EyeOff,
 } from "lucide-react";
 import type { User } from "@/types";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 
 // Extend the User type to include the new roles (if not already in types)
 // We'll use a union type locally; you can also update the global type.
@@ -54,6 +56,8 @@ export function UsersView() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  useLockBodyScroll(showForm || !!deleteId);
 
   useEffect(() => {
     fetchUsers();
@@ -596,8 +600,9 @@ export function UsersView() {
 
       {/* Create / Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-md w-full shadow-2xl text-crm-text-main max-h-[90vh] overflow-y-auto">
+        <ModalPortal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-md w-full shadow-2xl text-crm-text-main max-h-[90vh] overflow-y-auto animate-in fade-in duration-200">
             <h4 className="text-base font-bold mb-4">
               {editUser ? "Edit User" : "Add New User"}
             </h4>
@@ -697,12 +702,14 @@ export function UsersView() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Delete confirmation */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-sm w-full shadow-2xl text-crm-text-main">
+        <ModalPortal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-sm w-full shadow-2xl text-crm-text-main animate-in fade-in duration-200">
             <h4 className="text-base font-bold mb-2">Delete User?</h4>
             <p className="text-sm text-crm-text-sub mb-6">
               This will permanently remove the user account. Their leads will remain.
@@ -724,6 +731,7 @@ export function UsersView() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

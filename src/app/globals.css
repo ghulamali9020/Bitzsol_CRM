@@ -140,7 +140,33 @@
   }
 }
 
-/* Animations */
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--crm-border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--crm-border);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #0164da80;
+}
+
+/* ─── Focus ring ────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #0164da;
+  outline-offset: 2px;
+}
+
+/* ─── Animations ────────────────────────────────────────────────────────── */
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
@@ -149,4 +175,148 @@
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.08); }
+}
+
+@keyframes blobDrift {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -25px) scale(1.08); }
+  66% { transform: translate(-15px, 15px) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.stagger-item {
+  animation-delay: var(--stagger-delay, 0ms);
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--crm-panel-hover) 25%,
+    var(--crm-border) 37%,
+    var(--crm-panel-hover) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 3.5s ease-in-out infinite;
+}
+
+.animate-blob-drift {
+  animation: blobDrift 12s ease-in-out infinite;
+}
+
+/* Reusable hover-lift for cards */
+.card-hover {
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -12px rgba(1, 100, 218, 0.25);
+}
+
+/* Brand gradient text (Blue → Teal → Pink) */
+.text-brand-gradient {
+  background: linear-gradient(100deg, #0164da, #03d9af 55%, #fb66bc);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* ─── tailwindcss-animate–style entrance utilities ──────────────────────────
+   Several components already write `animate-in fade-in slide-in-from-top-2
+   duration-150` etc. expecting the tailwindcss-animate plugin, which isn't
+   installed — so those classes were previously silent no-ops. This shim
+   implements the same mechanism (CSS custom properties feeding one shared
+   `enter` keyframe) for the exact variants used across the app. */
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(
+        var(--tw-enter-translate-x, 0),
+        var(--tw-enter-translate-y, 0),
+        0
+      )
+      scale3d(
+        var(--tw-enter-scale, 1),
+        var(--tw-enter-scale, 1),
+        var(--tw-enter-scale, 1)
+      );
+  }
+}
+
+.animate-in {
+  animation-name: enter;
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+  /* Guaranteed-invalid by default so var(..., fallback) is used and no
+     transform is emitted unless a zoom-in or slide-in-from modifier class
+     is also applied. Without this, a bare "animate-in fade-in" still set
+     a transform: scale3d(1,1,1) during the animation - an identity
+     transform, but its mere presence still creates a new compositing
+     layer, which combined with backdrop-filter blur on an ancestor is a
+     known Chromium/Windows trigger for content vanishing or misplacing
+     itself inside flex/max-height layouts. */
+  --tw-enter-scale: initial;
+  --tw-enter-translate-x: initial;
+  --tw-enter-translate-y: initial;
+}
+.fade-in {
+  --tw-enter-opacity: 0;
+}
+.zoom-in-95 {
+  --tw-enter-scale: 0.95;
+}
+.slide-in-from-top-2 {
+  --tw-enter-translate-y: -0.5rem;
+}
+.slide-in-from-top-3 {
+  --tw-enter-translate-y: -0.75rem;
+}
+.duration-150 {
+  animation-duration: 150ms;
+}
+.duration-200 {
+  animation-duration: 200ms;
 }

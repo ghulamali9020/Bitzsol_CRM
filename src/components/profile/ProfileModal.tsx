@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { X, User, Key, Mail, CheckCircle, Shield, Eye, EyeOff } from "lucide-react";
 import type { AuthUser } from "@/types";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 
 interface Props {
   user: AuthUser;
@@ -11,6 +13,7 @@ interface Props {
 }
 
 export function ProfileModal({ user, onClose, onSaved }: Props) {
+  useLockBodyScroll();
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -135,7 +138,8 @@ export function ProfileModal({ user, onClose, onSaved }: Props) {
     "block text-xs font-bold text-[#0164DA] uppercase tracking-wider mb-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <ModalPortal>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className={`w-full ${isEditing ? 'max-w-2xl' : 'max-w-md'} bg-crm-panel border border-crm-border shadow-2xl rounded-2xl text-crm-text-main flex flex-col transition-all duration-300 overflow-hidden`}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-crm-border bg-crm-panel flex-shrink-0">
@@ -414,5 +418,6 @@ export function ProfileModal({ user, onClose, onSaved }: Props) {
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 }

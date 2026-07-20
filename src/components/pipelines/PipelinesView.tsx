@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Plus, Trash2, Pencil, Layers } from "lucide-react";
 import type { AuthUser, Pipeline } from "@/types";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 
 interface Props {
   user: AuthUser | null;
@@ -18,6 +20,8 @@ export function PipelinesView({ user, pipelines, onRefresh }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  useLockBodyScroll(showForm || !!deleteId);
 
   function openCreate() { setName(""); setDescription(""); setEditPipeline(null); setShowForm(true); }
   function openEdit(p: Pipeline) { setName(p.name); setDescription(p.description ?? ""); setEditPipeline(p); setShowForm(true); }
@@ -101,8 +105,9 @@ export function PipelinesView({ user, pipelines, onRefresh }: Props) {
 
       {/* Create / Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-md w-full shadow-2xl text-crm-text-main">
+        <ModalPortal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-md w-full shadow-2xl text-crm-text-main animate-in fade-in duration-200">
             <h4 className="text-base font-bold mb-4">{editPipeline ? "Edit Pipeline" : "New Pipeline"}</h4>
             {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-xs mb-4">{error}</div>}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -127,12 +132,14 @@ export function PipelinesView({ user, pipelines, onRefresh }: Props) {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Delete confirmation */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-sm w-full shadow-2xl text-crm-text-main">
+        <ModalPortal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-sm w-full shadow-2xl text-crm-text-main animate-in fade-in duration-200">
             <h4 className="text-base font-bold mb-2">Delete Pipeline?</h4>
             <p className="text-sm text-crm-text-sub mb-6">All leads in this pipeline will also be affected. This cannot be undone.</p>
             <div className="flex gap-3">
@@ -141,6 +148,7 @@ export function PipelinesView({ user, pipelines, onRefresh }: Props) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

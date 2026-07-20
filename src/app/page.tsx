@@ -30,7 +30,7 @@ function getVisibleTabs(role?: string): ActiveTab[] {
   }
 
   if (role === "admin") {
-    tabs.push("Users");
+    tabs.push("Finance", "Users");
   }
 
   return tabs;
@@ -101,9 +101,12 @@ export default function App() {
   if (sessionLoading) {
     return (
       <div className="min-h-screen bg-crm-bg flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 premium-gradient rounded-2xl flex items-center justify-center text-white font-black text-xl animate-pulse">
-            B
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
+          <div className="relative w-12 h-12">
+            <div className="absolute inset-0 rounded-2xl bg-[#0164DA]/40 blur-lg animate-glow-pulse" />
+            <div className="relative w-12 h-12 premium-gradient rounded-2xl flex items-center justify-center text-white font-black text-xl">
+              B
+            </div>
           </div>
           <p className="text-crm-text-sub text-sm font-semibold">
             Loading Bitzsol...
@@ -152,32 +155,34 @@ export default function App() {
           />
 
           <main className="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300">
-            {activeTab === "Dashboard" && (
-              <DashboardView
-                user={user}
-                stats={stats}
-                leads={leads}
-                pipelines={pipelines}
-                onLeadCreated={() => fetchAll()}
-              />
-            )}
-            {activeTab === "Leads" && (
-              <LeadsView
-                user={user}
-                leads={leads}
-                pipelines={pipelines}
-                onRefresh={() => fetchAll()}
-              />
-            )}
-            {activeTab === "Pipelines" && (
-              <PipelinesView
-                user={user}
-                pipelines={pipelines}
-                onRefresh={() => fetchAll()}
-              />
-            )}
-            {activeTab === "Finance" && <FinanceView user={user} />}
-            {activeTab === "Users" && user?.role === "admin" && <UsersView />}
+            <div key={activeTab} className="animate-fade-in-up">
+              {activeTab === "Dashboard" && (
+                <DashboardView
+                  user={user}
+                  stats={stats}
+                  leads={leads}
+                  pipelines={pipelines}
+                  onLeadCreated={() => fetchAll()}
+                />
+              )}
+              {activeTab === "Leads" && (
+                <LeadsView
+                  user={user}
+                  leads={leads}
+                  pipelines={pipelines}
+                  onRefresh={() => fetchAll()}
+                />
+              )}
+              {activeTab === "Pipelines" && (
+                <PipelinesView
+                  user={user}
+                  pipelines={pipelines}
+                  onRefresh={() => fetchAll()}
+                />
+              )}
+              {activeTab === "Finance" && <FinanceView user={user} />}
+              {activeTab === "Users" && user?.role === "admin" && <UsersView />}
+            </div>
           </main>
 
           <footer className="py-4 sm:py-5 px-4 sm:px-6 text-center border-t border-crm-border text-xs text-crm-text-sub">

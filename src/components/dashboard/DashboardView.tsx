@@ -49,7 +49,7 @@ export function DashboardView({
   return (
     <div className="space-y-5 sm:space-y-6">
       {/* ─── Top Action Row ─── */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="animate-fade-in-up flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-crm-text-sub text-sm">
             <span className="text-crm-text-main font-bold">{user?.name}</span>
@@ -75,7 +75,7 @@ export function DashboardView({
 
           <button
             onClick={() => setShowCreateLead(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#0164DA] hover:opacity-90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-[#0164DA]/20 whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2 bg-[#0164DA] hover:opacity-90 hover:shadow-xl active:scale-95 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-[#0164DA]/20 whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" /> Add Lead
           </button>
@@ -122,6 +122,7 @@ export function DashboardView({
       {/* ─── Stat Cards ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <StatCard
+          index={0}
           label="Total Leads"
           value={stats?.totalLeads ?? 0}
           icon={FileText}
@@ -129,6 +130,7 @@ export function DashboardView({
           trend={stats && stats.totalLeads > 0 ? "up" : undefined}
         />
         <StatCard
+          index={1}
           label={`Leads / ${timeframe}`}
           value={leadsCount ?? 0}
           icon={TrendingUp}
@@ -136,12 +138,14 @@ export function DashboardView({
           trend={leadsCount && leadsCount > 0 ? "up" : undefined}
         />
         <StatCard
+          index={2}
           label="Pipelines"
           value={pipelines.length}
           icon={Layers}
           color="#FB66BC"
         />
         <StatCard
+          index={3}
           label="Active Statuses"
           value={stats?.leadsByStatus.length ?? 0}
           icon={Users}
@@ -152,15 +156,16 @@ export function DashboardView({
 
       {/* ─── Leads by Status ─── */}
       {stats && stats.leadsByStatus.length > 0 && (
-        <div className="glass p-4 sm:p-6 rounded-2xl shadow-md border border-crm-border/30">
+        <div className="animate-fade-in-up glass p-4 sm:p-6 rounded-2xl shadow-md border border-crm-border/30" style={{ animationDelay: "120ms" }}>
           <h3 className="text-sm sm:text-base font-bold mb-4 text-crm-text-main">
             Leads by Status
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
-            {stats.leadsByStatus.map((s) => (
+            {stats.leadsByStatus.map((s, i) => (
               <div
                 key={s.status}
-                className="glass rounded-xl p-3 sm:p-4 flex flex-col gap-1 hover:shadow-md transition-all duration-300"
+                style={{ "--stagger-delay": `${i * 40}ms` } as React.CSSProperties}
+                className="stagger-item animate-fade-in-up card-hover glass rounded-xl p-3 sm:p-4 flex flex-col gap-1 transition-all duration-300"
               >
                 <p className="text-xs sm:text-sm text-crm-text-sub truncate">{s.status}</p>
                 <p className="text-xl sm:text-2xl font-black text-crm-text-main">{s._count}</p>
@@ -171,7 +176,7 @@ export function DashboardView({
       )}
 
       {/* ─── Recent Leads ─── */}
-      <div className="glass p-4 sm:p-6 rounded-2xl shadow-md border border-crm-border/30">
+      <div className="animate-fade-in-up glass p-4 sm:p-6 rounded-2xl shadow-md border border-crm-border/30" style={{ animationDelay: "180ms" }}>
         <div className="flex items-center justify-between mb-4 sm:mb-5">
           <h3 className="text-sm sm:text-base font-bold text-crm-text-main">
             Recent Leads
@@ -301,7 +306,7 @@ export function DashboardView({
       {user?.role === "admin" &&
         stats?.perUserStats &&
         stats.perUserStats.length > 0 && (
-          <div className="glass p-4 sm:p-6 rounded-2xl shadow-md border border-crm-border/30">
+          <div className="animate-fade-in-up glass p-4 sm:p-6 rounded-2xl shadow-md border border-crm-border/30" style={{ animationDelay: "240ms" }}>
             <div className="flex flex-wrap items-center gap-2 mb-4 sm:mb-5">
               <Award className="w-5 h-5 text-[#03D9AF] shrink-0" />
               <h3 className="text-sm sm:text-base font-bold text-crm-text-main">
@@ -315,7 +320,8 @@ export function DashboardView({
               {stats.perUserStats.map((dev, i) => (
                 <div
                   key={dev.userId}
-                  className="glass p-4 rounded-xl hover:border-[#0164DA]/30 hover:shadow-md transition-all duration-300"
+                  style={{ "--stagger-delay": `${i * 60}ms` } as React.CSSProperties}
+                  className="stagger-item animate-fade-in-up card-hover glass p-4 rounded-xl hover:border-[#0164DA]/30 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-9 h-9 rounded-xl premium-gradient flex items-center justify-center text-white font-bold text-sm shrink-0">
@@ -376,6 +382,7 @@ function StatCard({
   color,
   trend,
   subtitle,
+  index = 0,
 }: {
   label: string;
   value: number;
@@ -383,15 +390,19 @@ function StatCard({
   color: string;
   trend?: "up" | "down";
   subtitle?: string;
+  index?: number;
 }) {
   return (
-    <div className="glass p-4 sm:p-5 rounded-2xl shadow-md border border-crm-border/30 hover:shadow-lg transition-all duration-300">
+    <div
+      style={{ "--stagger-delay": `${index * 80}ms` } as React.CSSProperties}
+      className="stagger-item animate-fade-in-up card-hover group glass p-4 sm:p-5 rounded-2xl shadow-md border border-crm-border/30 transition-all duration-300"
+    >
       <div className="flex items-start justify-between mb-3 sm:mb-4">
         <span className="text-xs sm:text-sm font-bold text-crm-text-sub uppercase tracking-wider leading-tight pr-1">
           {label}
         </span>
         <div
-          className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
           style={{ backgroundColor: `${color}15` }}
         >
           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color }} />

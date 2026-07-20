@@ -12,6 +12,8 @@ import {
   Hash,
 } from "lucide-react";
 import type { Pipeline, Lead } from "@/types";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 
 interface Props {
   pipelines: Pipeline[];
@@ -21,6 +23,7 @@ interface Props {
 }
 
 export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
+  useLockBodyScroll();
   const isEdit = !!lead;
 
   const [firstName, setFirstName] = useState(lead?.firstName ?? "");
@@ -206,14 +209,15 @@ export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
     "block text-xs font-bold text-[#0164DA] uppercase tracking-wider mb-1";
 
   return (
-    <div className="fixed inset-0 z-50 bg-crm-bg/15 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl max-h-[90vh] bg-crm-panel/40 border border-crm-border/60 glass rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+    <ModalPortal>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-6xl max-h-[85vh] bg-crm-panel border border-crm-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in duration-200">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col h-full overflow-hidden"
+          className="flex flex-col flex-1 min-h-0 overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-crm-border bg-crm-panel/40 backdrop-blur-sm flex-shrink-0">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-crm-border bg-crm-panel flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-[#0164DA]/10 border border-[#0164DA]/30 text-[#0164DA] rounded-xl">
                 <Plus className="w-5 h-5" />
@@ -239,7 +243,7 @@ export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-crm-bg/50">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 bg-crm-bg">
             <div className="w-full flex flex-col lg:flex-row gap-4 lg:gap-6">
               {/* Left Column */}
               <div className="flex-1 flex flex-col gap-3">
@@ -818,7 +822,7 @@ export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 py-3 border-t border-crm-border bg-crm-panel/40 backdrop-blur-sm gap-3 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 py-3 border-t border-crm-border bg-crm-panel gap-3 flex-shrink-0">
             <div className="w-full sm:w-auto">
               {error && (
                 <div className="flex items-center gap-2 text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-sm font-semibold rounded-xl">
@@ -847,5 +851,6 @@ export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 }
