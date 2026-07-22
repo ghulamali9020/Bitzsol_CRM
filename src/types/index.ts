@@ -68,6 +68,7 @@ export interface Lead {
   date: string;
   designation?: string;
   jobTitle?: string; // ✅ added
+  headline?: string; // LinkedIn tagline — kept separate from jobTitle/designation
   company?: string; // ✅ added
   leadSource: string;
   sourceLink?: string;

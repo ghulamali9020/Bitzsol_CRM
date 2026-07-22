@@ -55,7 +55,7 @@ export function DashboardHeader({
           <Menu className="w-4 h-4 text-crm-text-sub" />
         </button>
         <div className="min-w-0">
-          <h2 className="text-sm sm:text-xl font-bold text-crm-text-main leading-tight truncate">
+          <h2 className="text-sm sm:text-xl font-black text-brand-solid leading-tight truncate">
             {activeTab}
           </h2>
           <div className="hidden sm:flex items-center gap-1 text-xs text-crm-text-sub mt-0.5">

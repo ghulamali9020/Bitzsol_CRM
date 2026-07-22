@@ -75,7 +75,7 @@ export function DashboardView({
 
           <button
             onClick={() => setShowCreateLead(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#0164DA] hover:opacity-90 hover:shadow-xl active:scale-95 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-[#0164DA]/20 whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2 btn-brand-gradient hover:opacity-95 hover:shadow-xl active:scale-95 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-[#0164DA]/20 whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" /> Add Lead
           </button>
@@ -221,20 +221,20 @@ export function DashboardView({
                       key={lead.id}
                       className="hover:bg-crm-panel-hover/30 transition-colors"
                     >
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-3">
+                      <td className="py-3 pr-4 max-w-0 w-full">
+                        <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-lg bg-crm-panel-hover border border-crm-border flex items-center justify-center text-[#0164DA] font-bold text-xs shrink-0">
                             {lead.firstName.substring(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-crm-text-main truncate">
+                            <p className="text-sm font-bold text-crm-text-main wrap-break-word">
                               {[lead.firstName, lead.middleName, lead.lastName]
                                 .filter(Boolean)
                                 .join(" ")}
                             </p>
-                            {lead.designation && (
-                              <p className="text-xs text-crm-text-sub truncate">
-                                {lead.designation}
+                            {(lead.headline || lead.designation) && (
+                              <p className="text-xs text-crm-text-sub wrap-break-word">
+                                {lead.headline || lead.designation}
                               </p>
                             )}
                           </div>
@@ -274,8 +274,10 @@ export function DashboardView({
                         .filter(Boolean)
                         .join(" ")}
                     </p>
-                    {lead.designation && (
-                      <p className="text-xs text-crm-text-sub">{lead.designation}</p>
+                    {(lead.headline || lead.designation) && (
+                      <p className="text-xs text-crm-text-sub wrap-break-word">
+                        {lead.headline || lead.designation}
+                      </p>
                     )}
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       <StatusBadge status={lead.status} />

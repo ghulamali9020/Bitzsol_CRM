@@ -78,10 +78,14 @@ export async function GET(req: NextRequest) {
       const companyField = lead.customFields.find(
         (cf) => cf.key.toLowerCase() === "company"
       );
+      const headlineField = lead.customFields.find(
+        (cf) => cf.key.toLowerCase() === "headline"
+      );
       return {
         ...lead,
         jobTitle: lead.designation || undefined,
         company: companyField?.value || undefined,
+        headline: headlineField?.value || undefined,
       };
     });
 
@@ -109,7 +113,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       firstName, middleName, lastName, date, designation,
-      jobTitle, company,
+      jobTitle, company, headline,
       leadSource, sourceLink, remarks, status,
       pipelineId, emails, phones, customFields, tags,
     } = body;
@@ -159,6 +163,7 @@ export async function POST(req: NextRequest) {
               value: f.value,
             })),
             ...(company?.trim() ? [{ key: "Company", value: company.trim() }] : []),
+            ...(headline?.trim() ? [{ key: "Headline", value: headline.trim() }] : []),
           ],
         },
       },

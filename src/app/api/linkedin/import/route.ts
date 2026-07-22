@@ -139,6 +139,7 @@ export async function POST(req: NextRequest) {
       company: company?.trim() || null,
       location: location?.trim() || null,
       experience: experience?.trim() || null,
+      tagline: source === "extension" ? (headline as string | null)?.trim() || null : null,
       leadSource,
     });
 

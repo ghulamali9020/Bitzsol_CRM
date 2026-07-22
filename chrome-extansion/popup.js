@@ -25,6 +25,7 @@ const statusEl = document.getElementById("status");
 const profileCard = document.getElementById("profile-card");
 const nameInput = document.getElementById("profile-name");
 const headlineInput = document.getElementById("profile-headline");
+const jobTitleInput = document.getElementById("profile-jobtitle");
 const companyInput = document.getElementById("profile-company");
 const locationInput = document.getElementById("profile-location");
 const emailInput = document.getElementById("profile-email");
@@ -53,6 +54,7 @@ function getFieldValues() {
   return {
     name: nameInput.value.trim() || null,
     headline: headlineInput.value.trim() || null,
+    jobTitle: jobTitleInput.value.trim() || null,
     company: companyInput.value.trim() || null,
     location: locationInput.value.trim() || null,
     email: emailInput.value.trim() || null,
@@ -66,6 +68,25 @@ function updateButtonStates() {
   copyBtn.disabled = !hasFetchedProfile;
   syncBtn.disabled = isSyncing || !hasFetchedProfile || !pipelineSelect.value;
   syncBtn.textContent = isSyncing ? "Syncing…" : "Sync Lead";
+}
+
+// Auto-selects the pipeline whose name matches the detected platform (e.g. a
+// pipeline named "LinkedIn Leads" gets picked on a linkedin.com/in/… page).
+// Only runs once nothing has been picked yet, so it never clobbers a manual
+// choice, and it's still fully overridable via the dropdown.
+function autoSelectPipeline() {
+  if (!detectedPlatform || pipelineSelect.value) return;
+
+  const match = [...pipelineSelect.options].find(
+    (opt) =>
+      opt.value &&
+      opt.textContent.toLowerCase().includes(detectedPlatform.toLowerCase()),
+  );
+
+  if (match) {
+    pipelineSelect.value = match.value;
+    updateButtonStates();
+  }
 }
 
 // ─── Load pipelines on popup open ─────────────────────────────────────────────
@@ -371,19 +392,23 @@ async function scrapeLinkedInPage() {
 
   location = location?.split("·")[0]?.trim() || null;
 
-  // ── Company ───────────────────────────────────────────────────────────────
-  // LinkedIn doesn't expose company as a discrete field on the profile header,
-  // so we try, in order: (1) the first entry in the "Experience" section,
-  // which is usually "Job Title" then "Company · Employment type"; (2) an
-  // "at Company" / "@ Company" pattern inside the headline itself.
-  //
-  // The Experience section is looked up via the #experience anchor — a
-  // stable jump-link id LinkedIn has used for years, far less likely to
-  // change than heading text or class names. If it hasn't rendered yet
-  // (LinkedIn lazy-loads content below the fold), we scroll it into view
-  // and give it a moment before reading it, the same trick used above for
-  // the contact-info modal.
   let company = null;
+  let jobTitle = null;
+
+  // LinkedIn renders company/school names as hovercard-triggering links,
+  // which often duplicate the visible text for the hovercard preview —
+  // innerText then comes back as e.g. "AcmeCorpAcmeCorp". Collapse an exact
+  // self-repeat. (Plain text like a job title never hits this, which is why
+  // company came back wrong while every other field was fine.)
+  const dedupeText = (text) => {
+    const t = text?.trim();
+    if (!t) return t || null;
+    const half = t.length / 2;
+    if (Number.isInteger(half) && t.slice(0, half) === t.slice(half)) {
+      return t.slice(0, half);
+    }
+    return t;
+  };
 
   let expAnchor = document.getElementById("experience");
   let expSection = expAnchor?.closest("section");
@@ -404,15 +429,69 @@ async function scrapeLinkedInPage() {
       null;
   }
 
-  const firstExpItem = expSection?.querySelector("li");
-  if (firstExpItem) {
-    const lines = firstExpItem.innerText
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
-    if (lines.length > 1) {
-      company = lines[1].split("·")[0]?.trim() || null;
+  const allExpItems = expSection ? [...expSection.querySelectorAll("li")] : [];
+  const topLevelItems = allExpItems.filter(
+    (li) => !li.parentElement?.closest("li"),
+  );
+
+  const currentEntry =
+    topLevelItems.find((li) => /present/i.test(li.innerText)) ||
+    topLevelItems[0] ||
+    null;
+
+  let expDebug = { currentEntryFound: false };
+
+  if (currentEntry) {
+    const nestedRoles = [...currentEntry.querySelectorAll("li")];
+
+    // The company name is (almost) always also a link to its LinkedIn
+    // company page — a far more reliable signal than guessing which text
+    // line is the company, since line order/format has churned repeatedly.
+    const companyLink = currentEntry.querySelector(
+      'a[href*="/company/"], a[href*="/school/"]',
+    );
+
+    // A single stray nested <li> (e.g. a media attachment or skill chip) is
+    // NOT the same as a real "multiple roles at one company" grouped entry —
+    // only treat it as grouped when there's more than one nested item.
+    const isGrouped = nestedRoles.length > 1;
+
+    if (isGrouped) {
+      company = companyLink
+        ? dedupeText(companyLink.innerText.split("\n")[0])
+        : dedupeText(currentEntry.innerText.split("\n")[0]);
+      const roleItem =
+        nestedRoles.find((li) => /present/i.test(li.innerText)) ||
+        nestedRoles[0];
+      jobTitle = dedupeText(roleItem.innerText.split("\n")[0]?.split("·")[0]);
     }
+
+    // Either this wasn't a grouped entry, or the grouped read came back
+    // empty — fall back to reading the entry's own text lines directly.
+    if (!isGrouped || (!jobTitle && !company)) {
+      const lines = currentEntry.innerText
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+      if (!jobTitle && lines.length > 0) {
+        jobTitle = dedupeText(lines[0]?.split("·")[0]);
+      }
+      if (!company) {
+        company = companyLink
+          ? dedupeText(companyLink.innerText.split("\n")[0])
+          : lines.length > 1
+            ? dedupeText(lines[1]?.split("·")[0])
+            : null;
+      }
+    }
+
+    expDebug = {
+      currentEntryFound: true,
+      nestedRolesCount: nestedRoles.length,
+      isGrouped,
+      companyLinkFound: !!companyLink,
+      currentEntryText: currentEntry.innerText?.slice(0, 200) || "",
+    };
   }
 
   if (!company && headline) {
@@ -431,16 +510,22 @@ async function scrapeLinkedInPage() {
       ...document.querySelectorAll("h1,h2,h3,[role='heading']"),
     ].map((el) => `${el.tagName}: "${el.innerText?.trim()?.slice(0, 80)}"`),
     headlineResult: headline || "none",
+    jobTitleResult: jobTitle || "none",
     emailResult: email || "none",
     phoneResult: phone || "none",
     companyResult: company || "none",
     locationResult: location || "none",
     openedModal: openedProgrammatically,
+    expAnchorFound: !!expAnchor,
+    expSectionFound: !!expSection,
+    expTopLevelItemCount: topLevelItems.length,
+    exp: expDebug,
   };
 
   return {
     name,
     headline,
+    jobTitle,
     company,
     location,
     email,
@@ -450,13 +535,7 @@ async function scrapeLinkedInPage() {
   };
 }
 
-// ─── Scraping function for Upwork / Fiverr profile pages ──────────────────────
-// Both platforms deliberately strip contact info from public profiles (it's
-// against their ToS to share it outside the platform), and their DOM class
-// names churn constantly like LinkedIn's. So instead of chasing CSS selectors
-// we lean on stable, SEO-oriented sources: <title>, OpenGraph meta tags, and
-// schema.org JSON-LD — all of which these platforms populate for search
-// engines and are far less likely to change than internal class names.
+
 async function scrapeGenericProfilePage() {
   const host = window.location.hostname.replace(/^www\./, "");
   const platform = host.includes("upwork.com")
@@ -524,8 +603,6 @@ async function scrapeGenericProfilePage() {
     name = document.querySelector("h1")?.innerText?.trim() || null;
   }
 
-  // Only trust genuine mailto:/tel: links — never guess contact info that
-  // isn't literally present, since these platforms intentionally hide it.
   const emailLink = document.querySelector('a[href^="mailto:"]');
   const email = emailLink
     ? emailLink.href.replace("mailto:", "").trim() || null
@@ -548,6 +625,7 @@ async function scrapeGenericProfilePage() {
   return {
     name,
     headline,
+    jobTitle: null, // no structured experience list to read a current title from
     company: null, // these are individual profiles, not employer records
     location,
     email,
@@ -557,9 +635,6 @@ async function scrapeGenericProfilePage() {
   };
 }
 
-// ─── Fetch + preview (runs automatically when the popup opens) ────────────────
-// This only reads the page — it never talks to the CRM. The user reviews what
-// was found and decides whether to press "Sync Lead".
 async function fetchAndPreviewProfile() {
   profileCard.classList.remove("visible");
   hasFetchedProfile = false;
@@ -598,7 +673,8 @@ async function fetchAndPreviewProfile() {
       (r?.name ? 5 : 0) +
       (r?.email ? 3 : 0) +
       (r?.phone ? 3 : 0) +
-      (r?.company ? 2 : 0);
+      (r?.company ? 2 : 0) +
+      (r?.jobTitle ? 2 : 0);
 
     const sorted = (results || [])
       .map((r) => r.result)
@@ -612,6 +688,7 @@ async function fetchAndPreviewProfile() {
     profile = {
       name: null,
       headline: null,
+      jobTitle: null,
       company: null,
       location: null,
       email: null,
@@ -622,6 +699,7 @@ async function fetchAndPreviewProfile() {
     for (const r of [...sorted].reverse()) {
       if (r.name) profile.name = r.name;
       if (r.headline) profile.headline = r.headline;
+      if (r.jobTitle) profile.jobTitle = r.jobTitle;
       if (r.company) profile.company = r.company;
       if (r.location) profile.location = r.location;
       if (r.email) profile.email = r.email;
@@ -648,10 +726,10 @@ async function fetchAndPreviewProfile() {
     return;
   }
 
-  // Populate the editable fields — nothing has been sent to the CRM yet, and
-  // the user can correct any of these before syncing.
+  
   nameInput.value = profile.name || "";
   headlineInput.value = profile.headline || "";
+  jobTitleInput.value = profile.jobTitle || "";
   companyInput.value = profile.company || "";
   locationInput.value = profile.location || "";
   emailInput.value = profile.email || "";
@@ -665,13 +743,12 @@ async function fetchAndPreviewProfile() {
   updateButtonStates();
 }
 
-// ─── Copy button click ──────────────────────────────────────────────────────
-// Copies the (possibly hand-edited) fields to the clipboard as plain text.
 copyBtn.addEventListener("click", async () => {
   const fields = getFieldValues();
   const lines = [
     `Name: ${fields.name || "—"}`,
     `Headline: ${fields.headline || "—"}`,
+    `Job Title: ${fields.jobTitle || "—"}`,
     `Company: ${fields.company || "—"}`,
     `Location: ${fields.location || "—"}`,
     `Email: ${fields.email || "—"}`,
@@ -688,9 +765,6 @@ copyBtn.addEventListener("click", async () => {
   }
 });
 
-// ─── Sync button click ────────────────────────────────────────────────────────
-// Only fires on explicit user action — sends whatever is currently in the
-// editable fields (including manual corrections) to the CRM, no re-scraping.
 syncBtn.addEventListener("click", async () => {
   const pipelineId = pipelineSelect.value;
   if (!pipelineId) {
@@ -720,6 +794,7 @@ syncBtn.addEventListener("click", async () => {
         pipelineId,
         name: fields.name,
         headline: fields.headline,
+        jobTitle: fields.jobTitle,
         company: fields.company,
         location: fields.location,
         email: fields.email,
@@ -744,5 +819,7 @@ syncBtn.addEventListener("click", async () => {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 pipelineSelect.addEventListener("change", updateButtonStates);
-loadPipelines().then(updateButtonStates);
-fetchAndPreviewProfile();
+Promise.all([loadPipelines(), fetchAndPreviewProfile()]).then(() => {
+  autoSelectPipeline();
+  updateButtonStates();
+});

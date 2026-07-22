@@ -32,10 +32,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const companyField = lead.customFields.find(
       (cf) => cf.key.toLowerCase() === "company"
     );
+    const headlineField = lead.customFields.find(
+      (cf) => cf.key.toLowerCase() === "headline"
+    );
     const mappedLead = {
       ...lead,
       jobTitle: lead.designation || undefined,
       company: companyField?.value || undefined,
+      headline: headlineField?.value || undefined,
     };
 
     return NextResponse.json({ data: mappedLead });
@@ -62,7 +66,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const body = await req.json();
     const {
       firstName, middleName, lastName, date, designation,
-      jobTitle, company,
+      jobTitle, company, headline,
       leadSource, sourceLink, remarks, status,
       emails, phones, customFields, tags,
     } = body;
@@ -102,15 +106,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       };
     }
 
-    if (customFields !== undefined || company !== undefined) {
+    if (customFields !== undefined || company !== undefined || headline !== undefined) {
       let finalFields = customFields;
       if (finalFields === undefined) {
         const currentFields = await prisma.leadCustomField.findMany({ where: { leadId: id } });
         finalFields = currentFields.map(f => ({ key: f.key, value: f.value }));
       }
-      
-      finalFields = finalFields.filter((f: any) => f.key.toLowerCase() !== "company");
-      
+
+      finalFields = finalFields.filter(
+        (f: any) => f.key.toLowerCase() !== "company" && f.key.toLowerCase() !== "headline",
+      );
+
       if (company !== undefined && company !== null) {
         if (company.trim()) {
           finalFields.push({ key: "Company", value: company.trim() });
@@ -122,6 +128,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           });
           if (existingCompany) {
             finalFields.push({ key: "Company", value: existingCompany.value });
+          }
+        }
+      }
+
+      if (headline !== undefined && headline !== null) {
+        if (headline.trim()) {
+          finalFields.push({ key: "Headline", value: headline.trim() });
+        }
+      } else {
+        if (customFields === undefined) {
+          const existingHeadline = await prisma.leadCustomField.findFirst({
+            where: { leadId: id, key: { equals: "Headline", mode: "insensitive" } }
+          });
+          if (existingHeadline) {
+            finalFields.push({ key: "Headline", value: existingHeadline.value });
           }
         }
       }
@@ -150,10 +171,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const companyField = lead.customFields.find(
       (cf) => cf.key.toLowerCase() === "company"
     );
+    const headlineField = lead.customFields.find(
+      (cf) => cf.key.toLowerCase() === "headline"
+    );
     const mappedLead = {
       ...lead,
       jobTitle: lead.designation || undefined,
       company: companyField?.value || undefined,
+      headline: headlineField?.value || undefined,
     };
 
     return NextResponse.json({ data: mappedLead, message: "Lead updated." });

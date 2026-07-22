@@ -103,7 +103,7 @@ export function AuthGate({ onAuth }: Props) {
           </div>
           <button
             type="submit" disabled={loading}
-            className="w-full py-3.5 rounded-xl text-white font-bold bg-[#0164DA] hover:opacity-90 hover:shadow-xl active:scale-[0.98] transition-all mt-2 disabled:opacity-50 disabled:active:scale-100 cursor-pointer shadow-lg shadow-[#0164DA]/25"
+            className="w-full py-3.5 rounded-xl text-white font-bold btn-brand-gradient hover:opacity-95 hover:shadow-xl active:scale-[0.98] transition-all mt-2 disabled:opacity-50 disabled:active:scale-100 cursor-pointer shadow-lg shadow-[#0164DA]/25"
           >
             {loading ? "Signing In..." : "Sign In"}
           </button>

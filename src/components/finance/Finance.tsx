@@ -288,7 +288,7 @@ export function FinanceView({ user }: Props) {
   // ─── Render ──────────────────────────────────────────────────────────
   return (
     <div className="space-y-5 sm:space-y-6">
-      <div className="rounded-[28px] border border-crm-border/70 bg-gradient-to-br from-[#0164DA]/12 via-crm-panel to-[#03D9AF]/10 p-4 sm:p-6 shadow-[0_20px_60px_rgba(1,100,218,0.08)] backdrop-blur-sm transition-all duration-300">
+      <div className="animate-fade-in-up rounded-[28px] border border-crm-border/70 bg-linear-to-br from-[#0164DA]/12 via-crm-panel to-[#03D9AF]/10 p-4 sm:p-6 shadow-[0_20px_60px_rgba(1,100,218,0.08)] backdrop-blur-sm transition-all duration-300">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="max-w-2xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-crm-text-sub">
@@ -369,7 +369,10 @@ export function FinanceView({ user }: Props) {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-crm-border/40 overflow-x-auto rounded-2xl bg-crm-panel/70 px-1 py-1 shadow-sm">
+      <div
+        className="animate-fade-in-up flex border-b border-crm-border/40 overflow-x-auto rounded-2xl bg-crm-panel/70 px-1 py-1 shadow-sm"
+        style={{ animationDelay: "60ms" }}
+      >
         {visibleTabs.map((tab) => (
           <button
             key={tab}
@@ -394,6 +397,7 @@ export function FinanceView({ user }: Props) {
         >
           {(isAdmin || isFinanceAdmin) && (
             <StatCard
+              index={0}
               label="Total Income"
               value={totalIncome}
               icon={TrendingUp}
@@ -401,6 +405,7 @@ export function FinanceView({ user }: Props) {
             />
           )}
           <StatCard
+            index={1}
             label="Total Expenses"
             value={totalExpense}
             icon={TrendingDown}
@@ -408,6 +413,7 @@ export function FinanceView({ user }: Props) {
           />
           {(isAdmin || isFinanceAdmin) && (
             <StatCard
+              index={2}
               label="Net Profit"
               value={profit}
               icon={FileText}
@@ -418,7 +424,10 @@ export function FinanceView({ user }: Props) {
       )}
 
       {/* Transaction Table */}
-      <div className="glass p-4 sm:p-6 rounded-2xl shadow-md border border-crm-border/30 overflow-hidden">
+      <div
+        className="animate-fade-in-up glass p-4 sm:p-6 rounded-2xl shadow-md border border-crm-border/30 overflow-hidden"
+        style={{ animationDelay: "180ms" }}
+      >
         {/* Search and filters */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 mb-4">
           <div className="relative flex-1 min-w-[200px]">
@@ -838,24 +847,29 @@ export function FinanceView({ user }: Props) {
 /* ─── Helper Components ─── */
 
 function StatCard({
+  index = 0,
   label,
   value,
   icon: Icon,
   color,
 }: {
+  index?: number;
   label: string;
   value: number;
   icon: React.ElementType;
   color: string;
 }) {
   return (
-    <div className="glass p-4 sm:p-5 rounded-2xl shadow-md border border-crm-border/30 hover:shadow-lg transition-all duration-300">
+    <div
+      style={{ "--stagger-delay": `${index * 60}ms` } as React.CSSProperties}
+      className="stagger-item animate-fade-in-up card-hover group glass p-4 sm:p-5 rounded-2xl shadow-md border border-crm-border/30 transition-all duration-300"
+    >
       <div className="flex items-start justify-between mb-3 sm:mb-4">
         <span className="text-xs sm:text-sm font-bold text-crm-text-sub uppercase tracking-wider leading-tight">
           {label}
         </span>
         <div
-          className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110"
           style={{ backgroundColor: `${color}15` }}
         >
           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color }} />
@@ -906,7 +920,10 @@ function AddTransactionModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className="bg-crm-panel p-6 rounded-2xl max-w-md w-full shadow-2xl border border-crm-border max-h-[90vh] overflow-y-auto animate-in fade-in duration-200">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-crm-text-main">
+          <h3
+            className="text-lg font-black"
+            style={{ color: type === "expense" ? "#EF4444" : "#03D9AF" }}
+          >
             Add {type === "expense" ? "Expense" : "Income"}
           </h3>
           <button
@@ -925,7 +942,7 @@ function AddTransactionModal({
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-crm-panel border border-crm-border rounded-xl px-4 py-2.5 text-sm text-crm-text-main focus:outline-none focus:border-[#0164DA]"
+              className="w-full bg-crm-panel border border-crm-border rounded-xl px-4 py-2.5 text-sm text-crm-text-main focus:outline-none focus:border-[#0164DA] focus:ring-2 focus:ring-[#0164DA]/20 transition-all"
               required
             />
           </div>
@@ -939,7 +956,7 @@ function AddTransactionModal({
               step="0.01"
               value={amount || ""}
               onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-              className="w-full bg-crm-panel border border-crm-border rounded-xl px-4 py-2.5 text-sm text-crm-text-main focus:outline-none focus:border-[#0164DA]"
+              className="w-full bg-crm-panel border border-crm-border rounded-xl px-4 py-2.5 text-sm text-crm-text-main focus:outline-none focus:border-[#0164DA] focus:ring-2 focus:ring-[#0164DA]/20 transition-all"
               required
             />
           </div>
@@ -951,7 +968,7 @@ function AddTransactionModal({
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-crm-panel border border-crm-border rounded-xl px-4 py-2.5 text-sm text-crm-text-main focus:outline-none focus:border-[#0164DA]"
+              className="w-full bg-crm-panel border border-crm-border rounded-xl px-4 py-2.5 text-sm text-crm-text-main focus:outline-none focus:border-[#0164DA] focus:ring-2 focus:ring-[#0164DA]/20 transition-all"
               required
             />
           </div>
@@ -965,7 +982,11 @@ function AddTransactionModal({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold bg-[#0164DA] text-white hover:opacity-90 transition-colors"
+              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 active:scale-95 transition-all shadow-lg"
+              style={{
+                backgroundColor: type === "expense" ? "#EF4444" : "#03D9AF",
+                boxShadow: `0 10px 25px -8px ${type === "expense" ? "#EF444440" : "#03D9AF40"}`,
+              }}
             >
               Add {type === "expense" ? "Expense" : "Income"}
             </button>

@@ -14,6 +14,7 @@ export type CreateLeadInput = ApifyLinkedInProfile &
     company?: string | null;
     location?: string | null;
     experience?: string | null;
+    tagline?: string | null; // LinkedIn headline, stored separately from designation (job title)
     leadSource?: string | null;
   };
 
@@ -40,6 +41,7 @@ export async function createLead(input: CreateLeadInput) {
     company,
     location,
     experience,
+    tagline,
     leadSource,
   } = input;
 
@@ -77,6 +79,8 @@ export async function createLead(input: CreateLeadInput) {
     customFields.push({ key: "Location", value: location.trim() });
   if (experience?.trim())
     customFields.push({ key: "Experience", value: experience.trim() });
+  if (tagline?.trim())
+    customFields.push({ key: "Headline", value: tagline.trim() });
 
   const lead = await prisma.lead.create({
     data: {

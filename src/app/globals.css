@@ -45,12 +45,12 @@
   --glass-blur: 12px;
 
   /* CRM Specific Adaptable Theme Colors */
-  --crm-bg: #f8fafc;
+  --crm-bg: #f6f8fc;
   --crm-panel: #ffffff;
   --crm-border: #e2e8f0;
   --crm-text-main: #000000;
   --crm-text-sub: #475569;
-  --crm-panel-hover: #f1f5f9;
+  --crm-panel-hover: #eef2fb;
   --crm-input-bg: #f1f5f9;
 }
 
@@ -131,12 +131,98 @@
     border: 1px solid var(--glass-border);
   }
 
+  /* App shell canvas — solid CRM background plus a fixed, single-hue blue
+     wash (varying only in opacity/position, not color) so light mode reads
+     as "designed" instead of flat white-on-gray, without turning into a
+     multi-color rainbow. Dark mode gets a softer version of the same wash. */
+  .crm-app-bg {
+    background-color: var(--crm-bg);
+    background-image:
+      radial-gradient(ellipse 1000px 620px at 6% -10%, rgba(1, 100, 218, 0.14), transparent 62%),
+      radial-gradient(ellipse 820px 560px at 100% 4%, rgba(1, 100, 218, 0.08), transparent 58%),
+      radial-gradient(ellipse 950px 650px at 45% 105%, rgba(1, 100, 218, 0.06), transparent 62%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+  .dark .crm-app-bg {
+    background-image:
+      radial-gradient(ellipse 1000px 620px at 6% -10%, rgba(1, 100, 218, 0.1), transparent 62%),
+      radial-gradient(ellipse 820px 560px at 100% 4%, rgba(1, 100, 218, 0.06), transparent 58%),
+      radial-gradient(ellipse 950px 650px at 45% 105%, rgba(1, 100, 218, 0.05), transparent 62%);
+  }
+
+  /* Ambient drifting blobs behind the whole app shell — same device already
+     used on the sign-in screen, now used app-wide. All three are the single
+     brand blue at varying size/opacity for depth, deliberately not
+     multi-color, to keep the look plain/professional rather than a rainbow. */
+  .crm-ambient-blobs {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .crm-ambient-blobs span {
+    position: absolute;
+    width: 26rem;
+    height: 26rem;
+    border-radius: 9999px;
+    background: #0164da;
+    filter: blur(90px);
+    opacity: 0.1;
+    animation: blobDrift 16s ease-in-out infinite;
+  }
+  .dark .crm-ambient-blobs span {
+    opacity: 0.07;
+  }
+  .crm-ambient-blobs span:nth-child(1) {
+    top: -8rem;
+    left: -8rem;
+  }
+  .crm-ambient-blobs span:nth-child(2) {
+    top: 20%;
+    right: -10rem;
+    opacity: 0.07;
+    animation-delay: 3s;
+  }
+  .dark .crm-ambient-blobs span:nth-child(2) {
+    opacity: 0.05;
+  }
+  .crm-ambient-blobs span:nth-child(3) {
+    bottom: -10rem;
+    left: 30%;
+    opacity: 0.05;
+    animation-delay: 6s;
+  }
+  .dark .crm-ambient-blobs span:nth-child(3) {
+    opacity: 0.04;
+  }
+
   .premium-gradient {
     background: var(--background-image-premium-gradient);
   }
 
+  /* Single-hue brand gradient (light-blue → primary blue) — used for primary
+     buttons / header icon chips that want depth without introducing a
+     second color. */
+  .btn-brand-gradient {
+    background-image: linear-gradient(100deg, #3b8ce8, #0164da 130%);
+  }
+  .btn-brand-gradient:hover {
+    background-image: linear-gradient(100deg, #2a7bdb, #0152b3 130%);
+  }
+
   .text-gradient {
     color: var(--background-image-premium-gradient);
+  }
+
+  /* Plain single-color heading treatment — replaces the old multi-color
+     text-brand-gradient for a calmer, more professional look. */
+  .text-brand-solid {
+    color: #0164da;
+  }
+  .dark .text-brand-solid {
+    color: #4a9eff;
   }
 }
 

@@ -60,8 +60,7 @@ export function LeadsView({
   const itemsPerPage = 10;
 
   // Toggle Columns State
-  const [showColToggle, setShowColToggle] = useState(false);
-  const [visibleCols, setVisibleCols] = useState({
+  const defaultVisibleCols = {
     company: true, // NEW
     jobTitle: true,
     pipeline: true,
@@ -70,9 +69,34 @@ export function LeadsView({
     emails: true,
     phone: true, // NEW
     createdBy: true,
-  });
+  };
+  const [showColToggle, setShowColToggle] = useState(false);
+  const [visibleCols, setVisibleCols] = useState(defaultVisibleCols);
   const [colSearch, setColSearch] = useState("");
   const [pipelineSearch, setPipelineSearch] = useState("");
+
+  // Load this user's saved column visibility (personal — never affects other
+  // users) once on mount, merging over the defaults so newly-added columns
+  // still default to visible even for users who saved prefs before they existed.
+  useEffect(() => {
+    fetch("/api/users/lead-columns")
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.data && typeof res.data === "object") {
+          setVisibleCols({ ...defaultVisibleCols, ...res.data });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  function updateVisibleCols(next: typeof visibleCols) {
+    setVisibleCols(next);
+    fetch("/api/users/lead-columns", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ columns: next }),
+    }).catch(() => {});
+  }
 
   const allStatuses = [
     "All",
@@ -197,9 +221,9 @@ export function LeadsView({
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="animate-fade-in-up flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-crm-text-main">Leads</h3>
+          <h3 className="text-xl font-black text-brand-solid">Leads</h3>
           <p className="text-xs text-crm-text-sub">
             {user?.role === "business_developer"
               ? "Your leads"
@@ -209,14 +233,17 @@ export function LeadsView({
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#0164DA] hover:opacity-90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-[#0164DA]/20"
+          className="flex items-center gap-2 px-4 py-2.5 btn-brand-gradient hover:opacity-95 hover:shadow-xl active:scale-95 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-[#0164DA]/20"
         >
           <Plus className="w-3.5 h-3.5" /> Add Lead
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2.5 items-center">
+      <div
+        className="animate-fade-in-up relative z-20 flex flex-wrap gap-2.5 items-center"
+        style={{ animationDelay: "60ms" }}
+      >
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-crm-text-sub" />
@@ -440,7 +467,7 @@ export function LeadsView({
                             visibleCols[col.key as keyof typeof visibleCols]
                           }
                           onChange={() =>
-                            setVisibleCols({
+                            updateVisibleCols({
                               ...visibleCols,
                               [col.key]:
                                 !visibleCols[
@@ -461,7 +488,10 @@ export function LeadsView({
       </div>
 
       {/* Table */}
-      <div className="glass rounded-2xl overflow-hidden shadow-md border border-crm-border/30 relative">
+      <div
+        className="animate-fade-in-up glass rounded-2xl overflow-hidden shadow-md border border-crm-border/30 relative"
+        style={{ animationDelay: "120ms" }}
+      >
         {loading && (
           <div className="absolute inset-0 bg-crm-bg/40 backdrop-blur-[2px] flex items-center justify-center z-10 transition-all">
             <div className="flex flex-col items-center gap-2 bg-crm-panel/90 border border-crm-border/60 px-5 py-3 rounded-2xl shadow-xl">
@@ -572,26 +602,27 @@ export function LeadsView({
                     key={lead.id}
                     className="group hover:bg-crm-panel-hover/30 transition-colors"
                   >
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-crm-panel-hover border border-crm-border flex items-center justify-center text-[#0164DA] font-bold text-xs">
+                    <td className="px-5 py-4 max-w-0 w-full">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-crm-panel-hover border border-crm-border flex items-center justify-center text-[#0164DA] font-bold text-xs shrink-0">
                           {lead.firstName.substring(0, 2).toUpperCase()}
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-crm-text-main">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-crm-text-main wrap-break-word">
                             {[lead.firstName, lead.middleName, lead.lastName]
                               .filter(Boolean)
                               .join(" ")}
                           </p>
-                          {(lead.designation ||
+                          {(lead.headline ||
+                            lead.designation ||
                             (lead.tags && lead.tags.length > 0)) && (
                             <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                              {lead.designation && (
-                                <span className="text-xs text-crm-text-sub">
-                                  {lead.designation}
+                              {(lead.headline || lead.designation) && (
+                                <span className="text-xs text-crm-text-sub wrap-break-word">
+                                  {lead.headline || lead.designation}
                                 </span>
                               )}
-                              {lead.designation &&
+                              {(lead.headline || lead.designation) &&
                                 lead.tags &&
                                 lead.tags.length > 0 && (
                                   <span className="text-xs text-crm-text-sub/40">

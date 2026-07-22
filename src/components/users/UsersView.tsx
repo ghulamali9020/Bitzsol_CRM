@@ -243,23 +243,26 @@ export function UsersView() {
   return (
     <div className="space-y-5">
       {/* Title Header */}
-      <div className="flex items-center justify-between">
+      <div className="animate-fade-in-up flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-crm-text-main">Users</h3>
+          <h3 className="text-xl font-black text-brand-solid">Users</h3>
           <p className="text-xs text-crm-text-sub">
             {users.length} user{users.length !== 1 ? "s" : ""} registered
           </p>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#0164DA] hover:opacity-90 text-white text-xs font-bold rounded-xl cursor-pointer shadow-lg transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 btn-brand-gradient hover:opacity-95 hover:shadow-xl active:scale-95 text-white text-xs font-bold rounded-xl cursor-pointer shadow-lg shadow-[#0164DA]/20 transition-all"
         >
           <Plus className="w-3.5 h-3.5" /> Add User
         </button>
       </div>
 
       {/* Advanced Toolbar */}
-      <div className="flex flex-row gap-2 items-center justify-between glass p-3 sm:p-4 rounded-2xl shadow-md border border-crm-border/30">
+      <div
+        className="animate-fade-in-up relative z-20 flex flex-row gap-2 items-center justify-between glass p-3 sm:p-4 rounded-2xl shadow-md border border-crm-border/30"
+        style={{ animationDelay: "60ms" }}
+      >
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-crm-text-sub" />
           <input
@@ -341,7 +344,10 @@ export function UsersView() {
           </p>
         </div>
       ) : (
-        <div className="glass rounded-2xl overflow-hidden shadow-md border border-crm-border/30">
+        <div
+          className="animate-fade-in-up glass rounded-2xl overflow-hidden shadow-md border border-crm-border/30"
+          style={{ animationDelay: "120ms" }}
+        >
           {/* Desktop Table View */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full">
@@ -603,7 +609,7 @@ export function UsersView() {
         <ModalPortal>
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="bg-crm-panel rounded-2xl border border-crm-border p-6 max-w-md w-full shadow-2xl text-crm-text-main max-h-[90vh] overflow-y-auto animate-in fade-in duration-200">
-            <h4 className="text-base font-bold mb-4">
+            <h4 className="text-base font-black text-brand-solid mb-4">
               {editUser ? "Edit User" : "Add New User"}
             </h4>
             {formError && (
@@ -694,7 +700,7 @@ export function UsersView() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl bg-[#0164DA] hover:opacity-90 text-white text-sm font-bold disabled:opacity-50 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl btn-brand-gradient hover:opacity-95 active:scale-95 text-white text-sm font-bold disabled:opacity-50 cursor-pointer shadow-lg shadow-[#0164DA]/20 transition-all"
                 >
                   {saving ? "Saving..." : editUser ? "Update" : "Create"}
                 </button>

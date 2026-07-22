@@ -100,7 +100,7 @@ export default function App() {
 
   if (sessionLoading) {
     return (
-      <div className="min-h-screen bg-crm-bg flex items-center justify-center">
+      <div className="min-h-screen crm-app-bg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="relative w-12 h-12">
             <div className="absolute inset-0 rounded-2xl bg-[#0164DA]/40 blur-lg animate-glow-pulse" />
@@ -117,7 +117,14 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-crm-bg text-crm-text-main font-sans relative">
+    <div className="min-h-screen crm-app-bg text-crm-text-main font-sans relative">
+      {/* Ambient drifting brand-color blobs behind the whole app shell */}
+      <div className="crm-ambient-blobs">
+        <span />
+        <span />
+        <span />
+      </div>
+
       {!user && (
         <AuthGate
           onAuth={(u) => {
@@ -128,7 +135,7 @@ export default function App() {
       )}
 
       <div
-        className={`flex min-h-screen transition-all duration-500 ${
+        className={`relative z-10 flex min-h-screen transition-all duration-500 ${
           !user
             ? "filter blur-[6px] pointer-events-none select-none opacity-40"
             : ""

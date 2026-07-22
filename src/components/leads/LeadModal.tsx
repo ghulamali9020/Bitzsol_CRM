@@ -35,6 +35,7 @@ export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
 
   const [designation, setDesignation] = useState(lead?.designation ?? "");
   const [jobTitle, setJobTitle] = useState(lead?.jobTitle ?? ""); // NEW
+  const [headline, setHeadline] = useState(lead?.headline ?? "");
   const [company, setCompany] = useState(lead?.company ?? "");
   const [status, setStatus] = useState(lead?.status ?? "New");
   const [leadSource, setLeadSource] = useState(lead?.leadSource ?? "Other");
@@ -173,6 +174,7 @@ export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
         lastName,
         designation,
         jobTitle, // NEW
+        headline,
         company,
         status,
         leadSource,
@@ -217,13 +219,13 @@ export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
           className="flex flex-col flex-1 min-h-0 overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-crm-border bg-crm-panel flex-shrink-0">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-crm-border bg-linear-to-r from-[#0164DA]/10 via-crm-panel to-[#0164DA]/5 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#0164DA]/10 border border-[#0164DA]/30 text-[#0164DA] rounded-xl">
+              <div className="p-2 btn-brand-gradient text-white rounded-xl shadow-md shadow-[#0164DA]/20">
                 <Plus className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold uppercase tracking-wider text-crm-text-main">
+                <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-brand-solid">
                   {isEdit ? "Modify Lead Details" : "Create New Lead"}
                 </h3>
                 <p className="text-[0.7rem] text-crm-text-sub uppercase tracking-widest mt-0.5 hidden sm:block">
@@ -410,6 +412,18 @@ export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
                       placeholder="e.g. Google"
                     />
                   </div>
+                </div>
+
+                {/* Headline (LinkedIn tagline — kept separate from Job Title) */}
+                <div>
+                  <label className={labelCls}>Headline</label>
+                  <input
+                    type="text"
+                    value={headline}
+                    onChange={(e) => setHeadline(e.target.value)}
+                    className={inputCls}
+                    placeholder="e.g. Full-Stack Engineer | MERN · Building AI-Integrated Web Applications"
+                  />
                 </div>
 
                 {/* Status & Lead Source */}
@@ -842,7 +856,7 @@ export function LeadModal({ pipelines, lead, onClose, onSaved }: Props) {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2.5 rounded-xl bg-[#0164DA] hover:bg-[#0164DA]/90 border border-[#0164DA] text-white font-bold text-sm uppercase tracking-widest transition-all disabled:opacity-50 cursor-pointer shadow-lg shadow-[#0164DA]/20"
+                className="px-6 py-2.5 rounded-xl btn-brand-gradient hover:opacity-95 active:scale-95 border border-[#0164DA] text-white font-bold text-sm uppercase tracking-widest transition-all disabled:opacity-50 cursor-pointer shadow-lg shadow-[#0164DA]/20"
               >
                 {loading ? "Saving…" : isEdit ? "Update Lead" : "Add Lead"}
               </button>
