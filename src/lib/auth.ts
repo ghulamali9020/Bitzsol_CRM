@@ -2,16 +2,23 @@ import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import type { AuthUser } from "@/types";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "bitzsol-crm-secret";
 const COOKIE_NAME = "crm_session";
 
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET is not set");
+  }
+  return secret;
+}
+
 export function signToken(user: AuthUser): string {
-  return jwt.sign(user, JWT_SECRET, { expiresIn: "24h" });
+  return jwt.sign(user, getJwtSecret(), { expiresIn: "24h" });
 }
 
 export function verifyToken(token: string): AuthUser | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as AuthUser;
+    return jwt.verify(token, getJwtSecret()) as AuthUser;
   } catch {
     return null;
   }

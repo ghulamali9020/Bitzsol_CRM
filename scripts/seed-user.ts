@@ -24,8 +24,12 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const email = "maazhassancrm121@gmail.com";
-  const password = "password123";
+  const email = process.env.SEED_ADMIN_EMAIL;
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  const name = process.env.SEED_ADMIN_NAME || "Admin";
+  if (!email || !password) {
+    throw new Error("SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must be set");
+  }
   const hashedPassword = await bcrypt.hash(password, 12);
 
   console.log(`Seeding user: ${email}...`);
@@ -34,14 +38,14 @@ async function main() {
     where: { email: email.toLowerCase().trim() },
     update: {
       password: hashedPassword,
-      name: "Maaz Hassan",
+      name,
       role: "admin",
       status: "active",
     },
     create: {
       email: email.toLowerCase().trim(),
       password: hashedPassword,
-      name: "Maaz Hassan",
+      name,
       role: "admin",
       status: "active",
     },

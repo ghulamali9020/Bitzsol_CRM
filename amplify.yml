@@ -1,0 +1,23 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm install 22
+        - nvm use 22
+        - npm ci
+    build:
+      commands:
+        # Migrations need the session pooler. DIRECT_URL is not passed to the app runtime.
+        - DATABASE_URL="$DIRECT_URL" npx prisma migrate deploy
+        # Amplify does not pass console variables to Next.js server code, so write the ones it needs.
+        - env | grep -E '^(DATABASE_URL|JWT_SECRET|DISCORD_EMAIL_WEBHOOK_URL|APIFY_TOKEN|APIFY_ACTOR_ID|APIFY_LINKEDIN_ACTOR_ID|APOLLO_API_URL|APOLLO_API_KEY|LEADMAGIC_API_URL|LEADMAGIC_API_KEY|NEXT_PUBLIC_[A-Z0-9_]+)=' >> .env.production
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
